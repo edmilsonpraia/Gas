@@ -21,7 +21,7 @@
 
 @layer components {
   .card {
-    @apply bg-white rounded-lg shadow-soft border border-gray-200 p-6 transition-colors duration-300;
+    @apply bg-white rounded-lg shadow-soft border border-gray-200 p-4 transition-colors duration-300;
   }
 
   body.dark .card {
@@ -29,7 +29,7 @@
   }
 
   .card-header {
-    @apply text-lg font-semibold text-gray-800 mb-4 pb-3 border-b border-gray-200 transition-colors duration-300;
+    @apply text-base font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200 transition-colors duration-300;
   }
 
   body.dark .card-header {
@@ -37,7 +37,7 @@
   }
 
   .input-field {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-gray-900
+    @apply w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md bg-white text-gray-900
            focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
            transition-all duration-200;
   }
@@ -47,13 +47,13 @@
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-primary-600 text-white font-medium rounded-md
+    @apply px-3 py-1.5 text-sm bg-primary-600 text-white font-medium rounded-md
            hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
            transition-all duration-200 shadow-sm hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-md
+    @apply px-3 py-1.5 text-sm bg-gray-100 text-gray-700 font-medium rounded-md
            hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
            transition-all duration-200;
   }
@@ -63,7 +63,7 @@
   }
 
   .metric-card {
-    @apply bg-gradient-to-br from-white to-gray-50 rounded-lg p-6 border border-gray-200 shadow-soft
+    @apply bg-gradient-to-br from-white to-gray-50 rounded-lg p-4 border border-gray-200 shadow-soft
            hover:shadow-medium transition-all duration-300;
   }
 
@@ -72,7 +72,7 @@
   }
 
   .metric-label {
-    @apply text-sm font-medium text-gray-600 uppercase tracking-wide mb-1 transition-colors duration-300;
+    @apply text-xs font-medium text-gray-600 uppercase tracking-wide mb-1 transition-colors duration-300;
   }
 
   body.dark .metric-label {
@@ -80,7 +80,7 @@
   }
 
   .metric-value {
-    @apply text-3xl font-bold text-primary-600 transition-colors duration-300;
+    @apply text-2xl font-bold text-primary-600 transition-colors duration-300;
   }
 
   body.dark .metric-value {
@@ -88,7 +88,7 @@
   }
 
   .metric-delta {
-    @apply text-sm font-medium mt-2;
+    @apply text-xs font-medium mt-1.5;
   }
 
   .sidebar {
@@ -100,7 +100,7 @@
   }
 
   .tab-button {
-    @apply px-6 py-3 font-medium text-gray-600 border-b-2 border-transparent
+    @apply px-4 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent
            hover:text-primary-600 hover:border-primary-300 transition-all duration-200
            cursor-pointer;
   }

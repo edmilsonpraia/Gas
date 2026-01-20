@@ -20,13 +20,13 @@ export default function Sidebar({ onDataChange }) {
 
   // Estados para valores de monitoramento
   const [hpValues, setHpValues] = useState({
-    comp1: 15000,
-    comp2: 11000
+    comp1: 23000,
+    comp2: 17000
   });
 
   const [lpValues, setLpValues] = useState({
-    comp3: 10000,
-    comp4: 8000
+    comp3: 15000,
+    comp4: 12900
   });
 
   const [additionalValues, setAdditionalValues] = useState({

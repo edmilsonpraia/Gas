@@ -49,8 +49,8 @@ export class EmissionCalculator {
    * @returns {Object} Emissões por fonte
    */
   static calcularCenarioAtual(data) {
-    const vazaoLPFlare = (data.monitoring?.totals?.totalLP || 0);
-    const vazaoHPFlare = (data.monitoring?.totals?.totalHP || 0);
+    const vazaoLPFlare = (data.monitoring?.totals?.totalLP || 27900);
+    const vazaoHPFlare = (data.monitoring?.totals?.totalHP || 40000);
     const vazaoHull = 1728000; // Hull vent padrão (Sm³/d)
 
     // Emissões SOMENTE de flare (combustão)

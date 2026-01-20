@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Calculator, ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
 import { NumberFormatter } from '../utils/unitConverter';
+import MonteCarloSimulation from './MonteCarloSimulation';
 
 /**
  * Componente de Metodologia - Fórmulas e Cálculos
@@ -12,7 +13,8 @@ export default function MethodologyFormulas({ data }) {
     recovery: false,
     balance: false,
     conversion: false,
-    montecarlo: false
+    montecarlo: false,
+    montecarlo_interactive: false
   });
 
   const toggleSection = (section) => {
@@ -348,6 +350,20 @@ Q_total_recuperado = ${NumberFormatter.format(vazaoHull * taxaRecuperacaoHull / 
         onToggle={() => toggleSection('montecarlo')}
       >
         <MonteCarloMethodology />
+      </FormulaSection>
+
+      {/* 6. SIMULAÇÃO MONTE CARLO INTERATIVA */}
+      <FormulaSection
+        title="🎲 6. Simulação Monte Carlo Interativa"
+        expanded={expandedSections.montecarlo}
+        onToggle={() => toggleSection('montecarlo')}
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Simulação técnica com cenários otimista, moderado e pessimista para análise de risco operacional.
+          </p>
+          <MonteCarloSimulation data={data} />
+        </div>
       </FormulaSection>
     </div>
   );

@@ -16,15 +16,7 @@ import TechnicalAnalysis from './components/TechnicalAnalysis';
 import ThemeToggle from './components/ThemeToggle';
 import MethodologyFormulas from './components/MethodologyFormulas';
 import FlareEmissionForecast from './components/FlareEmissionForecast';
-import {
-  FlowComparisonChart,
-  HPLPDistributionChart,
-  PressureTempChart,
-  CompressorFlowChart,
-  EnvironmentalImpactChart,
-  SystemEfficiencyGauge,
-  EmissionsBreakdownSunburst
-} from './components/Charts';
+import ComparativeCharts from './components/ComparativeCharts';
 import { EmissionCalculator } from './utils/calculations';
 import * as XLSX from 'xlsx';
 
@@ -34,7 +26,8 @@ function App() {
     const saved = localStorage.getItem('theme');
     return saved === 'dark';
   });
-  const [data, setData] = useState({
+  // Estado inicial com valores corretos
+  const initialData = {
     monitoring: {
       hpFlare: { comp1: 23000, comp2: 17000 },
       lpFlare: { comp3: 15000, comp4: 12900 },
@@ -46,7 +39,9 @@ function App() {
       lp: { vazao: 200000, pressao: 10, temperatura: 60 },
       blower: { vazao: 250000, pressao: 1.913, temperatura: 50 }
     }
-  });
+  };
+
+  const [data, setData] = useState(initialData);
 
   // Sync dark mode with document.body and localStorage
   useEffect(() => {
@@ -163,12 +158,12 @@ function App() {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Dashboard Executivo', icon: Activity },
-    { id: 'calculator', label: 'Calculadora Técnica', icon: Calculator },
-    { id: 'analysis', label: 'Análise Técnica', icon: Microscope },
-    { id: 'charts', label: 'Gráficos Comparativos', icon: TrendingDown },
-    { id: 'advanced', label: 'Análises Avançadas', icon: LineChart },
-    { id: 'reports', label: 'Relatório Completo', icon: FileText }
+    { id: 'overview', label: 'Dashboard', icon: Activity },
+    { id: 'calculator', label: 'Calculadora', icon: Calculator },
+    { id: 'analysis', label: 'Análise', icon: Microscope },
+    { id: 'charts', label: 'Gráficos', icon: TrendingDown },
+    { id: 'advanced', label: 'Avançado', icon: LineChart },
+    { id: 'reports', label: 'Relatórios', icon: FileText }
   ];
 
   return (
@@ -180,17 +175,17 @@ function App() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg">
-          <div className="px-8 py-6">
+          <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Flame size={32} />
-                  <h1 className="text-3xl font-bold">Simulador Gas Recovery</h1>
+                <div className="flex items-center gap-2 mb-1">
+                  <Flame size={24} />
+                  <h1 className="text-xl font-bold">Simulador Gas Recovery</h1>
                 </div>
-                <p className="text-primary-100">
+                <p className="text-primary-100 text-sm">
                   Estratégias de Redução de Queima de Gás - Campo Magnólia
                 </p>
-                <p className="text-primary-200 text-sm mt-1">
+                <p className="text-primary-200 text-xs mt-0.5">
                   TCC - Engenharia de Petróleos | UCAN 2025 | Leodumira Irina Pereira Lourenço
                 </p>
               </div>
@@ -237,7 +232,7 @@ function App() {
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto p-5">
           {activeTab === 'overview' && (
             <ScenarioComparison data={data} />
           )}
@@ -255,36 +250,8 @@ function App() {
                 </div>
               </div>
 
-              {/* Grid de Gráficos - 2 colunas */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="card lg:col-span-2">
-                  <SystemEfficiencyGauge data={data} />
-                </div>
-
-                <div className="card">
-                  <EnvironmentalImpactChart data={data} />
-                </div>
-
-                <div className="card">
-                  <EmissionsBreakdownSunburst data={data} />
-                </div>
-
-                <div className="card">
-                  <FlowComparisonChart data={data} />
-                </div>
-
-                <div className="card">
-                  <HPLPDistributionChart data={data} />
-                </div>
-
-                <div className="card">
-                  <PressureTempChart data={data} />
-                </div>
-
-                <div className="card">
-                  <CompressorFlowChart data={data} />
-                </div>
-              </div>
+              {/* Gráficos Comparativos */}
+              <ComparativeCharts data={data} />
 
               {/* Previsão ML - Largura Total */}
               <div className="card border-t-4 border-blue-600">

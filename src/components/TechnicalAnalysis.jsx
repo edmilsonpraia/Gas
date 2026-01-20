@@ -1,358 +1,355 @@
 import React from 'react';
-import { Microscope, TrendingUp, AlertCircle } from 'lucide-react';
+import { CheckCircle, TrendingDown, Leaf } from 'lucide-react';
 import { NumberFormatter } from '../utils/unitConverter';
 import { EmissionCalculator } from '../utils/calculations';
-import MonteCarloSimulation from './MonteCarloSimulation';
 
 /**
- * Análise Técnica Detalhada
+ * Análise Técnica - Sistema de Recuperação de Gás
  */
 export default function TechnicalAnalysis({ data }) {
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
+  const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
 
-  // Análises técnicas
-  const totalHP = data.monitoring?.totals?.totalHP || 0;
-  const totalLP = data.monitoring?.totals?.totalLP || 0;
-  const totalFlaring = totalHP + totalLP;
+  const vazaoLPFlare = data.monitoring?.totals?.totalLP || 27900;
+  const vazaoHPFlare = data.monitoring?.totals?.totalHP || 40000;
+  const vazaoHull = 1728000;
 
-  const razaoHPLP = totalHP / (totalLP || 1);
-  const percentualHP = (totalHP / (totalFlaring || 1)) * 100;
-  const percentualLP = (totalLP / (totalFlaring || 1)) * 100;
+  // Taxas de recuperação
+  const taxaRecuperacaoHull = 95;
+  const taxaReducaoLP = 91;
+  const taxaReducaoHP = 91;
 
-  const vazaoTotal = (data.compressors?.hp?.vazao || 0) +
-                     (data.compressors?.lp?.vazao || 0) +
-                     (data.compressors?.blower?.vazao || 0);
+  // Cálculos de gás recuperado
+  const gasHullCapturado = vazaoHull * (taxaRecuperacaoHull / 100);
+  const gasLPRecuperado = vazaoLPFlare * (taxaReducaoLP / 100);
+  const gasHPRecuperado = vazaoHPFlare * (taxaReducaoHP / 100);
+  const gasTotalRecuperado = gasHullCapturado + gasLPRecuperado + gasHPRecuperado;
 
-  const capacidadeHP = ((data.compressors?.hp?.vazao || 0) / 500000) * 100;
-  const capacidadeLP = ((data.compressors?.lp?.vazao || 0) / 500000) * 100;
+  // Vazões residuais
+  const vazaoHullResidual = vazaoHull * (1 - taxaRecuperacaoHull / 100);
+  const vazaoLPResidual = vazaoLPFlare * (1 - taxaReducaoLP / 100);
+  const vazaoHPResidual = vazaoHPFlare * (1 - taxaReducaoHP / 100);
+  const totalEmitido = vazaoLPResidual + vazaoHPResidual + vazaoHullResidual;
 
-  const deltaTemp = (data.compressors?.hp?.temperatura || 0) -
-                    (data.compressors?.lp?.temperatura || 0);
+  // Redução de emissões
+  const reducaoEmissoes = cenarioAtual.emissoes_total - cenarioProposto.emissoes_total;
+  const reducaoPercentual = (reducaoEmissoes / cenarioAtual.emissoes_total) * 100;
 
-  const razaoPressao = (data.compressors?.hp?.pressao || 0) /
-                       (data.compressors?.lp?.pressao || 1);
+  // Taxa global de recuperação
+  const totalFlareBase = vazaoLPFlare + vazaoHPFlare;
+  const percentualRecuperado = (cenarioProposto.vazao_recuperada / totalFlareBase * 100);
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-4 animate-fade-in">
       {/* Header */}
-      <div className="card bg-gradient-to-r from-blue-50 to-cyan-50">
-        <div className="flex items-center gap-3 mb-2">
-          <Microscope size={32} className="text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Análise Técnica</h2>
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border-l-4 border-green-500">
+        <div className="flex items-center gap-2 mb-1">
+          <CheckCircle size={24} className="text-green-600" />
+          <h2 className="text-lg font-bold text-green-900">✅ Método Proposto - Sistema de Recuperação</h2>
         </div>
-        <p className="text-gray-600">
-          Análise detalhada dos parâmetros operacionais e indicadores de performance
+        <p className="text-green-800">
+          Sistema integrado de captura, compressão e recuperação de gás
         </p>
       </div>
 
-      {/* Análise de Flaring */}
-      <div className="card">
-        <h3 className="card-header">Análise de Flaring HP/LP</h3>
+      {/* Descrição do Sistema */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Descrição do Sistema Proposto</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="metric-card border-2 border-red-300">
-            <div className="metric-label text-red-700">Total Flaring</div>
-            <div className="metric-value text-red-600">
-              {NumberFormatter.format(totalFlaring, 0)}
-            </div>
-            <div className="text-sm text-gray-600 mt-1">Sm³/d</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="card">
+            <h4 className="font-semibold text-gray-800 mb-3">💡 Inovações Técnicas:</h4>
+            <ul className="space-y-2 text-gray-700">
+              <li>• Sistema de captura Hull Vent ({taxaRecuperacaoHull}% eficiência)</li>
+              <li>• Compressão de gás recuperado</li>
+              <li>• Integração com rede de gás existente</li>
+              <li>• Redução LP Flare em {taxaReducaoLP}%</li>
+              <li>• Redução HP Flare em {taxaReducaoHP}%</li>
+            </ul>
           </div>
 
-          <div className="metric-card border-2 border-orange-300">
-            <div className="metric-label text-orange-700">Razão HP/LP</div>
-            <div className="metric-value text-orange-600">
-              {NumberFormatter.format(razaoHPLP, 2)}
-            </div>
-            <div className="text-sm text-gray-600 mt-1">adimensional</div>
-          </div>
-
-          <div className="metric-card border-2 border-yellow-300">
-            <div className="metric-label text-yellow-700">Limite 61k</div>
-            <div className="metric-value text-yellow-600">
-              {NumberFormatter.format(((totalFlaring / 61000) * 100), 1)}%
-            </div>
-            <div className="text-sm text-gray-600 mt-1">utilização</div>
+          <div className="card">
+            <h4 className="font-semibold text-gray-800 mb-3">🔧 Novos Equipamentos:</h4>
+            <ul className="space-y-2 text-gray-700">
+              <li>• Sistema de captura Hull Vent</li>
+              <li>• Compressor de recuperação</li>
+              <li>• Tubulação de interligação</li>
+              <li>• Instrumentação e controle</li>
+              <li>• Sistema de tratamento de gás</li>
+            </ul>
           </div>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* HP Flare */}
-          <div className="bg-red-50 p-6 rounded-lg border-2 border-red-200">
-            <h4 className="font-bold text-red-900 mb-4 flex items-center gap-2">
-              <AlertCircle size={20} />
-              HP Flare (Alta Pressão)
+      <div className="border-t border-gray-300 my-4"></div>
+
+      {/* Performance do Sistema */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Performance do Sistema</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="card bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300">
+            <p className="text-sm text-gray-700 mb-1">Gás Recuperado</p>
+            <h3 className="text-2xl font-bold text-green-700">
+              {NumberFormatter.format(gasTotalRecuperado / 1000, 1)}
+            </h3>
+            <p className="text-sm text-green-600 font-semibold">KSm³/d</p>
+            <p className="text-xs text-gray-600 mt-2">
+              {NumberFormatter.format(percentualRecuperado, 1)}% do flare
+            </p>
+          </div>
+
+          <div className="card bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-300">
+            <p className="text-sm text-gray-700 mb-1">Redução LP Flare</p>
+            <h3 className="text-2xl font-bold text-blue-700">
+              {NumberFormatter.format(gasLPRecuperado, 0)}
+            </h3>
+            <p className="text-sm text-blue-600 font-semibold">Sm³/d</p>
+            <p className="text-xs text-red-600 mt-2 font-semibold">
+              -{taxaReducaoLP}%
+            </p>
+          </div>
+
+          <div className="card bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300">
+            <p className="text-sm text-gray-700 mb-1">Redução HP Flare</p>
+            <h3 className="text-2xl font-bold text-purple-700">
+              {NumberFormatter.format(gasHPRecuperado, 0)}
+            </h3>
+            <p className="text-sm text-purple-600 font-semibold">Sm³/d</p>
+            <p className="text-xs text-red-600 mt-2 font-semibold">
+              -{taxaReducaoHP}%
+            </p>
+          </div>
+
+          <div className="card bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300">
+            <p className="text-sm text-gray-700 mb-1">Taxa Global</p>
+            <h3 className="text-2xl font-bold text-orange-700">
+              {NumberFormatter.format(percentualRecuperado, 1)}
+            </h3>
+            <p className="text-sm text-orange-600 font-semibold">%</p>
+            <p className="text-xs text-gray-600 mt-2">
+              % de gás recuperado
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-300 my-4"></div>
+
+      {/* Balanço de Massa */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Balanço de Massa</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="card bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-400">
+            <h4 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+              <CheckCircle size={20} />
+              Gás Recuperado
             </h4>
-            <div className="space-y-3">
+            <div className="space-y-2 text-sm text-gray-700">
               <div className="flex justify-between">
-                <span className="text-gray-700">Total HP:</span>
-                <span className="font-bold text-red-700">
-                  {NumberFormatter.format(totalHP, 0)} Sm³/d
-                </span>
+                <span>Captura Hull Vent ({taxaRecuperacaoHull}%):</span>
+                <span className="font-semibold">{NumberFormatter.format(gasHullCapturado, 0)} Sm³/d</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-700">Percentual:</span>
-                <span className="font-bold text-red-700">
-                  {NumberFormatter.format(percentualHP, 1)}%
-                </span>
+                <span>Recuperação LP Flare ({taxaReducaoLP}%):</span>
+                <span className="font-semibold">{NumberFormatter.format(gasLPRecuperado, 0)} Sm³/d</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-700">Emissões:</span>
-                <span className="font-bold text-red-700">
-                  {NumberFormatter.format(cenarioAtual.emissoes_hp_flare, 0)} tCO₂eq/ano
-                </span>
+                <span>Recuperação HP Flare ({taxaReducaoHP}%):</span>
+                <span className="font-semibold">{NumberFormatter.format(gasHPRecuperado, 0)} Sm³/d</span>
+              </div>
+              <div className="border-t-2 border-green-300 pt-2 mt-2">
+                <div className="flex justify-between font-bold text-green-800">
+                  <span>Total Recuperado:</span>
+                  <span className="text-lg">{NumberFormatter.format(gasTotalRecuperado, 0)} Sm³/d</span>
+                </div>
+              </div>
+              <div className="text-xs text-green-700 mt-3">
+                Destinação: Rede de gás / Exportação / Injeção
               </div>
             </div>
           </div>
 
-          {/* LP Flare */}
-          <div className="bg-orange-50 p-6 rounded-lg border-2 border-orange-200">
-            <h4 className="font-bold text-orange-900 mb-4 flex items-center gap-2">
-              <AlertCircle size={20} />
-              LP Flare (Baixa Pressão)
+          <div className="card bg-gradient-to-br from-orange-50 to-red-50 border-2 border-orange-400">
+            <h4 className="font-semibold text-orange-900 mb-3 flex items-center gap-2">
+              <TrendingDown size={20} />
+              Emissões Residuais
             </h4>
-            <div className="space-y-3">
+            <div className="space-y-2 text-sm text-gray-700">
               <div className="flex justify-between">
-                <span className="text-gray-700">Total LP:</span>
-                <span className="font-bold text-orange-700">
-                  {NumberFormatter.format(totalLP, 0)} Sm³/d
-                </span>
+                <span>LP Flare (reduzido):</span>
+                <span className="font-semibold">{NumberFormatter.format(vazaoLPResidual, 0)} Sm³/d</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-700">Percentual:</span>
-                <span className="font-bold text-orange-700">
-                  {NumberFormatter.format(percentualLP, 1)}%
-                </span>
+                <span className="text-xs text-red-600">(-{taxaReducaoLP}%)</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-700">Emissões:</span>
-                <span className="font-bold text-orange-700">
-                  {NumberFormatter.format(cenarioAtual.emissoes_lp_flare, 0)} tCO₂eq/ano
-                </span>
+                <span>HP Flare (reduzido):</span>
+                <span className="font-semibold">{NumberFormatter.format(vazaoHPResidual, 0)} Sm³/d</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-xs text-red-600">(-{taxaReducaoHP}%)</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Hull Vent residual:</span>
+                <span className="font-semibold">{NumberFormatter.format(vazaoHullResidual, 0)} Sm³/d</span>
+              </div>
+              <div className="border-t-2 border-orange-300 pt-2 mt-2">
+                <div className="flex justify-between font-bold text-orange-800">
+                  <span>Total Emitido:</span>
+                  <span className="text-lg">{NumberFormatter.format(totalEmitido, 0)} Sm³/d</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Análise de Compressores */}
-      <div className="card">
-        <h3 className="card-header">Análise de Compressores</h3>
+      <div className="border-t border-gray-300 my-4"></div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="metric-card border-2 border-blue-300">
-            <div className="metric-label text-blue-700">Vazão Total</div>
-            <div className="metric-value text-blue-600">
-              {NumberFormatter.format(vazaoTotal, 0)}
-            </div>
-            <div className="text-sm text-gray-600 mt-1">Sm³/d</div>
-          </div>
+      {/* Emissões Reduzidas */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Emissões de GEE (Reduzidas)</h3>
 
-          <div className="metric-card border-2 border-purple-300">
-            <div className="metric-label text-purple-700">Delta Temperatura</div>
-            <div className="metric-value text-purple-600">
-              {NumberFormatter.format(deltaTemp, 1)}
-            </div>
-            <div className="text-sm text-gray-600 mt-1">°C (HP - LP)</div>
-          </div>
-
-          <div className="metric-card border-2 border-green-300">
-            <div className="metric-label text-green-700">Razão Pressão HP/LP</div>
-            <div className="metric-value text-green-600">
-              {NumberFormatter.format(razaoPressao, 1)}
-            </div>
-            <div className="text-sm text-gray-600 mt-1">adimensional</div>
-          </div>
-        </div>
-
-        {/* Tabela de Performance */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gradient-to-r from-blue-100 to-cyan-100">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
-                  Equipamento
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase">
-                  Vazão (Sm³/d)
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase">
-                  Capacidade (%)
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase">
-                  Pressão (bar)
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase">
-                  Temperatura (°C)
-                </th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              <tr className="hover:bg-blue-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Compressor HP
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.hp?.vazao || 0, 0)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(capacidadeHP, 1)}%
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.hp?.pressao || 0, 2)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.hp?.temperatura || 0, 1)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    capacidadeHP > 80 ? 'bg-red-100 text-red-800' :
-                    capacidadeHP > 60 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {capacidadeHP > 80 ? 'Alta' : capacidadeHP > 60 ? 'Média' : 'Normal'}
-                  </span>
-                </td>
-              </tr>
-
-              <tr className="hover:bg-blue-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Compressor LP
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.lp?.vazao || 0, 0)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(capacidadeLP, 1)}%
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.lp?.pressao || 0, 2)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.lp?.temperatura || 0, 1)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    capacidadeLP > 80 ? 'bg-red-100 text-red-800' :
-                    capacidadeLP > 60 ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {capacidadeLP > 80 ? 'Alta' : capacidadeLP > 60 ? 'Média' : 'Normal'}
-                  </span>
-                </td>
-              </tr>
-
-              <tr className="hover:bg-blue-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  Blower
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.blower?.vazao || 0, 0)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(((data.compressors?.blower?.vazao || 0) / 500000) * 100, 1)}%
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.blower?.pressao || 0, 3)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  {NumberFormatter.format(data.compressors?.blower?.temperatura || 0, 1)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                    Recuperação
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Indicadores de Performance */}
-      <div className="card">
-        <h3 className="card-header flex items-center gap-2">
-          <TrendingUp size={24} className="text-primary-600" />
-          Indicadores de Performance (KPIs)
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h4 className="font-semibold text-gray-800">Eficiência Operacional</h4>
-
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
-              <div className="text-sm text-gray-700 mb-1">Taxa de Utilização</div>
-              <div className="text-2xl font-bold text-green-700">
-                {NumberFormatter.format((totalFlaring / 61000) * 100, 1)}%
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div
-                  className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full"
-                  style={{ width: `${Math.min((totalFlaring / 61000) * 100, 100)}%` }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
-              <div className="text-sm text-gray-700 mb-1">Capacidade Média Compressores</div>
-              <div className="text-2xl font-bold text-blue-700">
-                {NumberFormatter.format((capacidadeHP + capacidadeLP) / 2, 1)}%
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                <div
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
-                  style={{ width: `${Math.min((capacidadeHP + capacidadeLP) / 2, 100)}%` }}
-                ></div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Tabela Comparativa */}
+          <div className="card">
+            <h4 className="font-semibold text-gray-800 mb-4">Comparação de Emissões</h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-semibold text-gray-700">Fonte</th>
+                    <th className="px-4 py-2 text-right font-semibold text-gray-700">Antes (tCO₂eq/ano)</th>
+                    <th className="px-4 py-2 text-right font-semibold text-gray-700">Depois (tCO₂eq/ano)</th>
+                    <th className="px-4 py-2 text-right font-semibold text-gray-700">Redução</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  <tr>
+                    <td className="px-4 py-2 text-gray-700">LP Flare</td>
+                    <td className="px-4 py-2 text-right font-medium">{NumberFormatter.format(cenarioAtual.emissoes_lp_flare, 0)}</td>
+                    <td className="px-4 py-2 text-right font-medium text-green-700">{NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0)}</td>
+                    <td className="px-4 py-2 text-right font-semibold text-green-700">
+                      {NumberFormatter.format(((cenarioAtual.emissoes_lp_flare - cenarioProposto.emissoes_lp_flare) / cenarioAtual.emissoes_lp_flare * 100), 1)}%
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 text-gray-700">Hull Vent</td>
+                    <td className="px-4 py-2 text-right font-medium">{NumberFormatter.format(cenarioAtual.emissoes_hull, 0)}</td>
+                    <td className="px-4 py-2 text-right font-medium text-green-700">{NumberFormatter.format(cenarioProposto.emissoes_hull, 0)}</td>
+                    <td className="px-4 py-2 text-right font-medium text-gray-500">N/A</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 text-gray-700">HP Flare</td>
+                    <td className="px-4 py-2 text-right font-medium">{NumberFormatter.format(cenarioAtual.emissoes_hp_flare, 0)}</td>
+                    <td className="px-4 py-2 text-right font-medium text-green-700">{NumberFormatter.format(cenarioProposto.emissoes_hp_flare, 0)}</td>
+                    <td className="px-4 py-2 text-right font-semibold text-green-700">
+                      {NumberFormatter.format(((cenarioAtual.emissoes_hp_flare - cenarioProposto.emissoes_hp_flare) / cenarioAtual.emissoes_hp_flare * 100), 1)}%
+                    </td>
+                  </tr>
+                  <tr className="bg-gray-50 font-bold">
+                    <td className="px-4 py-2 text-gray-900">TOTAL</td>
+                    <td className="px-4 py-2 text-right">{NumberFormatter.format(cenarioAtual.emissoes_total, 0)}</td>
+                    <td className="px-4 py-2 text-right text-green-700">{NumberFormatter.format(cenarioProposto.emissoes_total, 0)}</td>
+                    <td className="px-4 py-2 text-right text-green-700">{NumberFormatter.format(reducaoPercentual, 1)}%</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="font-semibold text-gray-800">Recomendações</h4>
+          {/* Card de Emissões Reduzidas */}
+          <div className="card bg-gradient-to-br from-green-900 to-emerald-700 text-white">
+            <h4 className="font-semibold text-white text-center mb-4 text-xl">✅ Emissões Reduzidas</h4>
 
-            {totalFlaring > 61000 && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle size={18} className="text-red-600" />
-                  <span className="font-semibold text-red-900">Alerta Crítico</span>
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-green-100">LP Flare:</span>
+                  <span className="font-semibold">{NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0)} tCO₂eq/ano</span>
                 </div>
-                <p className="text-sm text-red-700">
-                  Flaring acima do limite de 61.000 Sm³/d. Considere ativar sistema de recuperação.
-                </p>
-              </div>
-            )}
-
-            {capacidadeHP > 80 && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle size={18} className="text-yellow-600" />
-                  <span className="font-semibold text-yellow-900">Atenção</span>
+                <div className="flex justify-between">
+                  <span className="text-green-100">Hull Vent:</span>
+                  <span className="font-semibold">{NumberFormatter.format(cenarioProposto.emissoes_hull, 0)} tCO₂eq/ano</span>
                 </div>
-                <p className="text-sm text-yellow-700">
-                  Compressor HP operando acima de 80% da capacidade. Monitorar desgaste.
-                </p>
-              </div>
-            )}
-
-            {totalFlaring < 61000 && capacidadeHP < 80 && (
-              <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp size={18} className="text-green-600" />
-                  <span className="font-semibold text-green-900">Operação Normal</span>
+                <div className="flex justify-between">
+                  <span className="text-green-100">HP Flare:</span>
+                  <span className="font-semibold">{NumberFormatter.format(cenarioProposto.emissoes_hp_flare, 0)} tCO₂eq/ano</span>
                 </div>
-                <p className="text-sm text-green-700">
-                  Sistema operando dentro dos parâmetros normais. Continuar monitoramento.
-                </p>
               </div>
-            )}
+            </div>
+
+            <div className="bg-white rounded-lg p-4 text-center">
+              <p className="text-xs text-green-800 font-semibold mb-2">TOTAL ANUAL (NOVO)</p>
+              <h2 className="text-3xl font-bold text-green-700 mb-2">
+                {NumberFormatter.format(cenarioProposto.emissoes_total, 0)}
+              </h2>
+              <p className="text-lg text-green-800 font-semibold">toneladas CO₂eq</p>
+            </div>
+
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 mt-4 text-center">
+              <p className="text-sm font-semibold mb-1">REDUÇÃO: {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano</p>
+              <p className="text-2xl font-bold">↓ {NumberFormatter.format(reducaoPercentual, 1)}%</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Simulação de Monte Carlo */}
-      <MonteCarloSimulation data={data} />
+      <div className="border-t border-gray-300 my-4"></div>
+
+      {/* Benefícios e Vantagens */}
+      <div>
+        <h3 className="text-lg font-bold text-gray-900 mb-3">Benefícios e Vantagens</h3>
+
+        <div className="card bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-500">
+          <div className="flex items-start gap-3 mb-4">
+            <Leaf size={32} className="text-green-600 flex-shrink-0" />
+            <div>
+              <h4 className="font-semibold text-green-900 text-lg mb-3">Principais Benefícios do Sistema</h4>
+              <ul className="space-y-3 text-gray-700">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">•</span>
+                  <div>
+                    <strong>Aproveitamento Energético:</strong> {NumberFormatter.format(cenarioProposto.vazao_anual_recuperada / 1e6, 2)} MSm³/ano de gás recuperado
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">•</span>
+                  <div>
+                    <strong>Redução de Emissões:</strong> {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano ({NumberFormatter.format(reducaoPercentual, 1)}%)
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">•</span>
+                  <div>
+                    <strong>Geração de Receita:</strong> Gás recuperado pode ser comercializado ou usado
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">•</span>
+                  <div>
+                    <strong>Conformidade Ambiental:</strong> Alinhado com regulações de zero flare
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">•</span>
+                  <div>
+                    <strong>Sustentabilidade:</strong> Contribui para metas ESG da empresa
+                  </div>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 font-bold">•</span>
+                  <div>
+                    <strong>Eficiência Operacional:</strong> Otimização do aproveitamento de recursos
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

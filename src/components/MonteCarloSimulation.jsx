@@ -4,21 +4,51 @@ import { Play, RotateCcw, TrendingUp } from 'lucide-react';
 import { NumberFormatter } from '../utils/unitConverter';
 
 /**
- * Simulação de Monte Carlo para Análise de Risco
+ * Simulação de Monte Carlo para Análise de Risco Técnico
  *
  * Esta simulação gera múltiplas iterações de cenários possíveis
  * para prever distribuições probabilísticas de vazões e emissões.
+ * Cenários: Otimista, Moderado e Pessimista
  */
 export default function MonteCarloSimulation({ data }) {
   const [simulating, setSimulating] = useState(false);
   const [numIterations, setNumIterations] = useState(10000);
+  const [scenario, setScenario] = useState('moderate');
   const [results, setResults] = useState(null);
 
   const runSimulation = () => {
     setSimulating(true);
 
     setTimeout(() => {
-      const totalFlaringBase = data.monitoring?.totals?.totalFlaring || 44000;
+      // Definir parâmetros baseados no cenário selecionado
+      let scenarioParams;
+      switch (scenario) {
+        case 'optimistic':
+          scenarioParams = {
+            totalFlaringBase: (data.monitoring?.totals?.totalFlaring || 44000) * 0.85,
+            variability: 0.10, // ±10% variabilidade
+            recoveryRate: 0.95,
+            description: 'Cenário Otimista: Vazões reduzidas, baixa variabilidade, alta eficiência'
+          };
+          break;
+        case 'pessimistic':
+          scenarioParams = {
+            totalFlaringBase: (data.monitoring?.totals?.totalFlaring || 44000) * 1.15,
+            variability: 0.25, // ±25% variabilidade
+            recoveryRate: 0.75,
+            description: 'Cenário Pessimista: Vazões elevadas, alta variabilidade, baixa eficiência'
+          };
+          break;
+        default: // moderate
+          scenarioParams = {
+            totalFlaringBase: data.monitoring?.totals?.totalFlaring || 44000,
+            variability: 0.15, // ±15% variabilidade
+            recoveryRate: 0.85,
+            description: 'Cenário Moderado: Valores nominais, variabilidade média'
+          };
+      }
+
+      const { totalFlaringBase, variability } = scenarioParams;
       const hp1Base = data.monitoring?.hpFlare?.comp1 || 15000;
       const hp2Base = data.monitoring?.hpFlare?.comp2 || 11000;
       const lp1Base = data.monitoring?.lpFlare?.comp3 || 10000;
@@ -42,11 +72,11 @@ export default function MonteCarloSimulation({ data }) {
 
       // Executar simulações
       for (let i = 0; i < numIterations; i++) {
-        // Simular variabilidade nos componentes (±15% desvio padrão)
-        const hp1 = Math.max(0, randomNormal(hp1Base, hp1Base * 0.15));
-        const hp2 = Math.max(0, randomNormal(hp2Base, hp2Base * 0.15));
-        const lp1 = Math.max(0, randomNormal(lp1Base, lp1Base * 0.15));
-        const lp2 = Math.max(0, randomNormal(lp2Base, lp2Base * 0.15));
+        // Simular variabilidade nos componentes baseada no cenário
+        const hp1 = Math.max(0, randomNormal(hp1Base, hp1Base * variability));
+        const hp2 = Math.max(0, randomNormal(hp2Base, hp2Base * variability));
+        const lp1 = Math.max(0, randomNormal(lp1Base, lp1Base * variability));
+        const lp2 = Math.max(0, randomNormal(lp2Base, lp2Base * variability));
 
         hp1Samples.push(hp1);
         hp2Samples.push(hp2);
@@ -82,6 +112,7 @@ export default function MonteCarloSimulation({ data }) {
       };
 
       setResults({
+        scenario: scenarioParams,
         totalFlaring: {
           samples: totalFlaringSamples,
           stats: calcStats(totalFlaringSamples)
@@ -133,6 +164,16 @@ export default function MonteCarloSimulation({ data }) {
             </p>
           </div>
           <div className="flex gap-3">
+            <select
+              value={scenario}
+              onChange={(e) => setScenario(e.target.value)}
+              className="input-field"
+              disabled={simulating}
+            >
+              <option value="optimistic">Cenário Otimista</option>
+              <option value="moderate">Cenário Moderado</option>
+              <option value="pessimistic">Cenário Pessimista</option>
+            </select>
             <select
               value={numIterations}
               onChange={(e) => setNumIterations(parseInt(e.target.value))}
@@ -420,9 +461,9 @@ export default function MonteCarloSimulation({ data }) {
         </div>
       </div>
 
-      {/* Análise de Risco */}
+      {/* Análise de Risco Técnico */}
       <div className="card">
-        <h4 className="font-bold text-gray-800 mb-4">Análise de Risco</h4>
+        <h4 className="font-bold text-gray-800 mb-4">Análise de Risco Operacional</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className={`p-4 rounded-lg border-2 ${
             (results.totalFlaring.stats.p95 > 61000)
@@ -430,7 +471,7 @@ export default function MonteCarloSimulation({ data }) {
               : 'bg-green-50 border-green-300'
           }`}>
             <div className="text-sm font-semibold mb-1">
-              Probabilidade de Exceder Limite (61k)
+              Probabilidade de Exceder Limite (61k Sm³/d)
             </div>
             <div className="text-3xl font-bold">
               {((results.totalFlaring.samples.filter(x => x > 61000).length / numIterations) * 100).toFixed(1)}%
@@ -452,6 +493,37 @@ export default function MonteCarloSimulation({ data }) {
             </div>
             <div className="text-3xl font-bold text-purple-700">
               {((results.totalFlaring.stats.stdDev / results.totalFlaring.stats.mean) * 100).toFixed(1)}%
+            </div>
+          </div>
+        </div>
+
+        {/* Cenários Técnicos */}
+        <div className="mt-6">
+          <h5 className="font-semibold text-gray-800 mb-3">Cenários Técnicos Analisados</h5>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <h6 className="font-semibold text-green-900 text-sm mb-2">Cenário Otimista</h6>
+              <ul className="text-xs text-green-800 space-y-1">
+                <li>• Vazões 15% abaixo do nominal</li>
+                <li>• Variabilidade baixa (±10%)</li>
+                <li>• Eficiência operacional alta</li>
+              </ul>
+            </div>
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <h6 className="font-semibold text-blue-900 text-sm mb-2">Cenário Moderado</h6>
+              <ul className="text-xs text-blue-800 space-y-1">
+                <li>• Vazões nominais</li>
+                <li>• Variabilidade média (±15%)</li>
+                <li>• Eficiência operacional padrão</li>
+              </ul>
+            </div>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <h6 className="font-semibold text-red-900 text-sm mb-2">Cenário Pessimista</h6>
+              <ul className="text-xs text-red-800 space-y-1">
+                <li>• Vazões 15% acima do nominal</li>
+                <li>• Variabilidade alta (±25%)</li>
+                <li>• Eficiência operacional baixa</li>
+              </ul>
             </div>
           </div>
         </div>

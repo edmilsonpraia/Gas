@@ -13,62 +13,65 @@ export default function ScenarioComparison({ data }) {
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
   const equivalencias = EmissionCalculator.calcularEquivalencias(cenarioAtual.emissoes_total);
 
+  // Gás recuperado SOMENTE do flare (sem hull vent)
+  const gasRecuperadoFlare = (data.monitoring?.totals?.totalFlaring || 67900) * 0.91;
+
   const reducaoEmissoes = cenarioAtual.emissoes_total - cenarioProposto.emissoes_total;
   const reducaoPercentual = (reducaoEmissoes / cenarioAtual.emissoes_total) * 100;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Banner de Alerta Ambiental */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg p-8 shadow-strong">
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <AlertTriangle size={32} />
-          <h2 className="text-3xl font-bold">EMISSÕES DE GASES DE EFEITO ESTUFA (GEE)</h2>
+    <div className="space-y-3 animate-fade-in">
+      {/* Métricas Principais - Compacto */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Emissões Totais */}
+        <div className="bg-gradient-to-br from-red-600 to-red-700 text-white rounded-lg p-4 shadow-md">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={16} />
+            <h3 className="text-xs font-semibold">Emissões GEE</h3>
+          </div>
+          <p className="text-2xl font-bold mb-1">
+            {NumberFormatter.format(cenarioAtual.emissoes_total, 0)}
+          </p>
+          <p className="text-xs text-red-100">tCO₂eq/ano</p>
         </div>
-        <p className="text-center text-red-100 text-lg">
-          Impacto Ambiental Crítico - Sistema Atual
-        </p>
+
+        {/* Gás Queimado */}
+        <div className="bg-gradient-to-br from-orange-600 to-red-600 text-white rounded-lg p-4 shadow-md">
+          <h3 className="text-xs font-semibold mb-2">🔥 Gás Queimado</h3>
+          <p className="text-2xl font-bold mb-1">
+            {NumberFormatter.format(data.monitoring?.totals?.totalFlaring / 1000 || 67.9, 1)}
+          </p>
+          <p className="text-xs text-orange-100">KSm³/d (Atual)</p>
+        </div>
+
+        {/* Gás Recuperado */}
+        <div className="bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-lg p-4 shadow-md">
+          <h3 className="text-xs font-semibold mb-2">♻️ Gás Recuperado</h3>
+          <p className="text-2xl font-bold mb-1">
+            {NumberFormatter.format(gasRecuperadoFlare / 1000, 1)}
+          </p>
+          <p className="text-xs text-green-100">KSm³/d (Proposto)</p>
+        </div>
       </div>
 
-      {/* Emissões Totais - Destaque */}
-      <div className="bg-gradient-to-br from-red-700 to-red-900 text-white rounded-xl p-10 shadow-strong border-4 border-red-500">
-        <h1 className="text-6xl font-bold text-center mb-3">
-          {NumberFormatter.format(cenarioAtual.emissoes_total, 0)}
-        </h1>
-        <p className="text-2xl text-center text-red-100 font-semibold mb-4">
-          toneladas CO₂eq / ano
-        </p>
-        <p className="text-center text-red-200">
-          Equivalente a {NumberFormatter.format(equivalencias.carros, 0)} carros rodando por 1 ano
-        </p>
-      </div>
-
-      {/* Botão para Mostrar/Ocultar Especificações */}
+      {/* Botão para Mostrar/Ocultar Especificações - Compacto */}
       <div className="flex justify-center">
         <button
           onClick={() => setShowSpecs(!showSpecs)}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 font-semibold"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
         >
-          {showSpecs ? (
-            <>
-              <ChevronUp size={20} />
-              Ocultar Especificações Técnicas
-            </>
-          ) : (
-            <>
-              <ChevronDown size={20} />
-              Mostrar Especificações Técnicas
-            </>
-          )}
+          {showSpecs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {showSpecs ? 'Ocultar Especificações' : 'Mostrar Especificações'}
         </button>
       </div>
 
-      {/* Especificações Técnicas do Campo */}
+      {/* Especificações Técnicas do Campo - Compacto */}
       {showSpecs && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-fade-in">
           {/* Especificações de Óleo, Água e Gás */}
-          <div className="card bg-gradient-to-br from-blue-50 to-cyan-50">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">⚗️ Óleo, Água e Gás</h3>
-          <div className="space-y-2 text-sm">
+          <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+          <h4 className="text-sm font-semibold text-gray-800 mb-2">⚗️ Óleo, Água e Gás</h4>
+          <div className="space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-gray-700">Densidade:</span>
               <span className="font-semibold text-gray-900">920 kg/m³</span>
@@ -101,12 +104,12 @@ export default function ScenarioComparison({ data }) {
         </div>
 
         {/* Especificações de Exportação e Água Produzida */}
-        <div className="card bg-gradient-to-br from-purple-50 to-pink-50">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">📋 Especificações de Exportação</h3>
+        <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+          <h4 className="text-sm font-semibold text-gray-800 mb-2">📋 Especificações de Exportação</h4>
 
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-gray-700 mb-2">Óleo de Exportação:</h4>
-            <div className="space-y-1 text-sm">
+          <div className="mb-3">
+            <h5 className="text-xs font-semibold text-gray-700 mb-1">Óleo de Exportação:</h5>
+            <div className="space-y-0.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-600">Salinidade:</span>
                 <span className="font-medium text-gray-900">&lt; 80 mg/l</span>
@@ -126,9 +129,9 @@ export default function ScenarioComparison({ data }) {
             </div>
           </div>
 
-          <div className="mb-4">
-            <h4 className="text-sm font-semibold text-gray-700 mb-2">Água Produzida:</h4>
-            <div className="space-y-1 text-sm">
+          <div className="mb-3">
+            <h5 className="text-xs font-semibold text-gray-700 mb-1">Água Produzida:</h5>
+            <div className="space-y-0.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-600">Disposição:</span>
                 <span className="font-medium text-gray-900">Sem descarte</span>
@@ -141,8 +144,8 @@ export default function ScenarioComparison({ data }) {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-2">Água de Slops:</h4>
-            <div className="space-y-1 text-sm">
+            <h5 className="text-xs font-semibold text-gray-700 mb-1">Água de Slops:</h5>
+            <div className="space-y-0.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-600">HC:</span>
                 <span className="font-medium text-gray-900">&lt; 15 ppm</span>
@@ -153,62 +156,62 @@ export default function ScenarioComparison({ data }) {
         </div>
       )}
 
-      {/* Grid de Comparação */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Grid de Comparação - Compacto */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Cenário Atual */}
-        <div className="card">
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <AlertTriangle className="text-red-600" size={24} />
+        <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <AlertTriangle className="text-red-600" size={16} />
             Cenário Atual
           </h3>
 
           {/* Imagem do Sistema Atual */}
-          <div className="mb-4">
+          <div className="mb-2">
             <img
               src="/01.jpeg"
               alt="Sistema Atual - Método Convencional"
-              className="w-full rounded-lg border-2 border-gray-300 shadow-md"
+              className="w-full rounded border border-gray-300"
             />
-            <p className="text-sm text-gray-600 text-center mt-2 italic">
+            <p className="text-xs text-gray-500 text-center mt-1">
               Sistema Atual - Método Convencional
             </p>
           </div>
 
           {/* Legenda Técnica */}
-          <div className="bg-gray-50 p-4 rounded-lg mb-4 text-sm">
-            <h4 className="font-semibold text-gray-700 mb-2">Legenda do Processo:</h4>
-            <ul className="space-y-1 text-gray-600">
-              <li>• <strong>Separador Trifásico LP (0.6 bar):</strong> Separa óleo, água e gás</li>
-              <li>• <strong>Hull Vent Blower:</strong> Sistema de ventilação do casco</li>
-              <li>• <strong>KO Drum:</strong> Vaso separador antes dos flares</li>
-              <li>• <strong>Flares LP/HP:</strong> Sistemas de queima de gás</li>
+          <div className="bg-gray-50 p-2 rounded mb-2 text-xs">
+            <h5 className="font-semibold text-gray-700 mb-1">Legenda:</h5>
+            <ul className="space-y-0.5 text-gray-600">
+              <li>• <strong>Sep. Trifásico LP:</strong> Separa óleo, água e gás</li>
+              <li>• <strong>Hull Vent Blower:</strong> Ventilação do casco</li>
+              <li>• <strong>KO Drum:</strong> Separador antes dos flares</li>
+              <li>• <strong>Flares LP/HP:</strong> Queima de gás</li>
             </ul>
           </div>
 
           {/* Emissões por Fonte */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center p-3 bg-red-50 rounded border border-red-200">
-              <span className="text-sm font-medium text-gray-700">LP Flare</span>
-              <span className="text-sm font-bold text-red-700">
-                {NumberFormatter.format(cenarioAtual.emissoes_lp_flare, 0)} tCO₂eq/ano
+          <div className="space-y-1">
+            <div className="flex justify-between items-center px-2 py-1.5 bg-red-50 rounded border border-red-200 text-xs">
+              <span className="font-medium text-gray-700">LP Flare</span>
+              <span className="font-bold text-red-700">
+                {NumberFormatter.format(cenarioAtual.emissoes_lp_flare, 0)}
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-red-50 rounded border border-red-200">
-              <span className="text-sm font-medium text-gray-700">HP Flare</span>
-              <span className="text-sm font-bold text-red-700">
-                {NumberFormatter.format(cenarioAtual.emissoes_hp_flare, 0)} tCO₂eq/ano
+            <div className="flex justify-between items-center px-2 py-1.5 bg-red-50 rounded border border-red-200 text-xs">
+              <span className="font-medium text-gray-700">HP Flare</span>
+              <span className="font-bold text-red-700">
+                {NumberFormatter.format(cenarioAtual.emissoes_hp_flare, 0)}
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-red-50 rounded border border-red-200">
-              <span className="text-sm font-medium text-gray-700">Hull Vent</span>
-              <span className="text-sm font-bold text-red-700">
-                {NumberFormatter.format(cenarioAtual.emissoes_hull, 0)} tCO₂eq/ano
+            <div className="flex justify-between items-center px-2 py-1.5 bg-red-50 rounded border border-red-200 text-xs">
+              <span className="font-medium text-gray-700">Hull Vent</span>
+              <span className="font-bold text-red-700">
+                {NumberFormatter.format(cenarioAtual.emissoes_hull, 0)}
               </span>
             </div>
-            <div className="flex justify-between items-center p-4 bg-red-100 rounded border-2 border-red-400">
-              <span className="text-base font-bold text-gray-900">TOTAL</span>
-              <span className="text-lg font-bold text-red-800">
-                {NumberFormatter.format(cenarioAtual.emissoes_total, 0)} tCO₂eq/ano
+            <div className="flex justify-between items-center px-2 py-2 bg-red-100 rounded border-2 border-red-400 text-sm">
+              <span className="font-bold text-gray-900">TOTAL</span>
+              <span className="font-bold text-red-800">
+                {NumberFormatter.format(cenarioAtual.emissoes_total, 0)}
               </span>
             </div>
           </div>
@@ -216,111 +219,110 @@ export default function ScenarioComparison({ data }) {
         </div>
 
         {/* Cenário Proposto */}
-        <div className="card">
-          <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <Leaf className="text-green-600" size={24} />
-            Cenário Proposto (com Recuperação)
+        <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <Leaf className="text-green-600" size={16} />
+            Cenário Proposto
           </h3>
 
           {/* Imagem do Sistema Proposto */}
-          <div className="mb-4">
+          <div className="mb-2">
             <img
               src="/02.jpeg"
               alt="Sistema Proposto - Método de Recuperação"
-              className="w-full rounded-lg border-2 border-green-500 shadow-md"
+              className="w-full rounded border border-green-500"
             />
-            <p className="text-sm text-gray-600 text-center mt-2 italic">
-              Sistema Proposto - Método de Recuperação de Gás
+            <p className="text-xs text-gray-500 text-center mt-1">
+              Sistema Proposto - Recuperação de Gás
             </p>
           </div>
 
           {/* Benefícios */}
-          <div className="bg-green-50 p-4 rounded-lg mb-4">
-            <h4 className="font-semibold text-green-800 mb-2">Benefícios do Sistema:</h4>
-            <ul className="space-y-1 text-sm text-green-700">
-              <li>✓ Redução de {reducaoPercentual.toFixed(1)}% nas emissões totais</li>
-              <li>✓ Recuperação de {NumberFormatter.format(cenarioProposto.vazao_recuperada, 0)} Sm³/d de gás</li>
-              <li>✓ Reaproveitamento do gás recuperado</li>
-              <li>✓ Menor impacto ambiental</li>
+          <div className="bg-green-50 p-2 rounded mb-2">
+            <h5 className="font-semibold text-green-800 mb-1 text-xs">Benefícios:</h5>
+            <ul className="space-y-0.5 text-xs text-green-700">
+              <li>✓ Redução {reducaoPercentual.toFixed(1)}% emissões</li>
+              <li>✓ Recuperação {NumberFormatter.format(cenarioProposto.vazao_recuperada, 0)} Sm³/d</li>
+              <li>✓ Reaproveitamento do gás</li>
             </ul>
           </div>
 
           {/* Emissões por Fonte */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center p-3 bg-green-50 rounded border border-green-200">
-              <span className="text-sm font-medium text-gray-700">LP Flare</span>
-              <span className="text-sm font-bold text-green-700">
-                {NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0)} tCO₂eq/ano
+          <div className="space-y-1">
+            <div className="flex justify-between items-center px-2 py-1.5 bg-green-50 rounded border border-green-200 text-xs">
+              <span className="font-medium text-gray-700">LP Flare</span>
+              <span className="font-bold text-green-700">
+                {NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0)}
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-green-50 rounded border border-green-200">
-              <span className="text-sm font-medium text-gray-700">HP Flare</span>
-              <span className="text-sm font-bold text-green-700">
-                {NumberFormatter.format(cenarioProposto.emissoes_hp_flare, 0)} tCO₂eq/ano
+            <div className="flex justify-between items-center px-2 py-1.5 bg-green-50 rounded border border-green-200 text-xs">
+              <span className="font-medium text-gray-700">HP Flare</span>
+              <span className="font-bold text-green-700">
+                {NumberFormatter.format(cenarioProposto.emissoes_hp_flare, 0)}
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-green-50 rounded border border-green-200">
-              <span className="text-sm font-medium text-gray-700">Hull Vent</span>
-              <span className="text-sm font-bold text-green-700">
-                {NumberFormatter.format(cenarioProposto.emissoes_hull, 0)} tCO₂eq/ano
+            <div className="flex justify-between items-center px-2 py-1.5 bg-green-50 rounded border border-green-200 text-xs">
+              <span className="font-medium text-gray-700">Hull Vent</span>
+              <span className="font-bold text-green-700">
+                {NumberFormatter.format(cenarioProposto.emissoes_hull, 0)}
               </span>
             </div>
-            <div className="flex justify-between items-center p-4 bg-green-100 rounded border-2 border-green-400">
-              <span className="text-base font-bold text-gray-900">TOTAL</span>
-              <span className="text-lg font-bold text-green-800">
-                {NumberFormatter.format(cenarioProposto.emissoes_total, 0)} tCO₂eq/ano
+            <div className="flex justify-between items-center px-2 py-2 bg-green-100 rounded border-2 border-green-400 text-sm">
+              <span className="font-bold text-gray-900">TOTAL</span>
+              <span className="font-bold text-green-800">
+                {NumberFormatter.format(cenarioProposto.emissoes_total, 0)}
               </span>
             </div>
           </div>
 
           {/* Redução de Emissões */}
-          <div className="mt-4">
-            <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingDown size={20} className="text-green-600" />
-                <span className="font-semibold text-green-900">Redução de Emissões</span>
+          <div className="mt-2">
+            <div className="bg-green-50 border-l-2 border-green-500 p-2 rounded">
+              <div className="flex items-center gap-1 mb-1">
+                <TrendingDown size={14} className="text-green-600" />
+                <span className="font-semibold text-green-900 text-xs">Redução</span>
               </div>
-              <p className="text-2xl font-bold text-green-700">
-                {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano
+              <p className="text-lg font-bold text-green-700">
+                {NumberFormatter.format(reducaoEmissoes, 0)}
               </p>
-              <p className="text-sm text-green-600 mt-1">
-                ({reducaoPercentual.toFixed(1)}% de redução)
+              <p className="text-xs text-green-600">
+                ({reducaoPercentual.toFixed(1)}% redução)
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Equivalências Ambientais */}
-      <div className="card bg-gradient-to-br from-green-50 to-emerald-50">
-        <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <Leaf className="text-green-600" size={24} />
-          Impacto Ambiental em Números
+      {/* Equivalências Ambientais - Compacto */}
+      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+        <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+          <Leaf className="text-green-600" size={16} />
+          Impacto Ambiental
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-            <div className="text-4xl mb-2">🚗</div>
-            <div className="text-3xl font-bold text-gray-900">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="text-center p-3 bg-gray-50 rounded border border-gray-200">
+            <div className="text-2xl mb-1">🚗</div>
+            <div className="text-lg font-bold text-gray-900">
               {NumberFormatter.format(equivalencias.carros, 0)}
             </div>
-            <div className="text-sm text-gray-600 mt-1">carros/ano</div>
+            <div className="text-xs text-gray-600">carros/ano</div>
           </div>
 
-          <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-            <div className="text-4xl mb-2">🌳</div>
-            <div className="text-3xl font-bold text-gray-900">
+          <div className="text-center p-3 bg-gray-50 rounded border border-gray-200">
+            <div className="text-2xl mb-1">🌳</div>
+            <div className="text-lg font-bold text-gray-900">
               {NumberFormatter.format(equivalencias.arvores, 0)}
             </div>
-            <div className="text-sm text-gray-600 mt-1">árvores necessárias</div>
+            <div className="text-xs text-gray-600">árvores</div>
           </div>
 
-          <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-            <div className="text-4xl mb-2">🏠</div>
-            <div className="text-3xl font-bold text-gray-900">
+          <div className="text-center p-3 bg-gray-50 rounded border border-gray-200">
+            <div className="text-2xl mb-1">🏠</div>
+            <div className="text-lg font-bold text-gray-900">
               {NumberFormatter.format(equivalencias.casas, 0)}
             </div>
-            <div className="text-sm text-gray-600 mt-1">casas/ano</div>
+            <div className="text-xs text-gray-600">casas/ano</div>
           </div>
         </div>
       </div>
