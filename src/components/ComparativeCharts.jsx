@@ -13,19 +13,21 @@ export default function ComparativeCharts({ data }) {
   const reducaoEmissoes = cenarioAtual.emissoes_total - cenarioProposto.emissoes_total;
   const reducaoPercentual = (reducaoEmissoes / cenarioAtual.emissoes_total) * 100;
 
-  // Cálculos de redução por fonte
-  const reducaoLP = cenarioAtual.emissoes_lp_flare - cenarioProposto.emissoes_lp_flare;
-  const reducaoHP = cenarioAtual.emissoes_hp_flare - cenarioProposto.emissoes_hp_flare;
-  const reducaoHull = cenarioAtual.emissoes_hull - cenarioProposto.emissoes_hull;
+  // Cálculos de redução por fonte - VALORES TROCADOS
+  // LP Flare + Hull Vent usa os valores do HP (que é maior)
+  // HP Flare usa os valores do LP (que é menor)
+  const reducaoLPHull = (cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull) - (cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull);
+  const reducaoHP = cenarioAtual.emissoes_lp_flare - cenarioProposto.emissoes_lp_flare;
 
-  const vazaoHPFlare = data.monitoring?.totals?.totalHP || 40000;
   const vazaoLPFlare = data.monitoring?.totals?.totalLP || 27900;
-  const vazaoHull = 1728000;
+  const vazaoHPFlare = data.monitoring?.totals?.totalHP || 40000;
+  const vazaoHull = 0;
 
-  // Vazões propostas (após redução)
-  const vazaoHPProposto = vazaoHPFlare * 0.09; // 9% residual (91% redução)
-  const vazaoLPProposto = vazaoLPFlare * 0.09; // 9% residual (91% redução)
-  const vazaoHullProposto = vazaoHull * 0.05; // 5% residual (95% captura)
+  // Vazões propostas (após redução) - VALORES TROCADOS
+  // LP Flare + Hull Vent (usa valores do HP)
+  const vazaoLPHullProposto = (vazaoHPFlare + vazaoHull) * 0.09; // 9% residual (91% redução)
+  // HP Flare (usa valores do LP)
+  const vazaoHPProposto = vazaoLPFlare * 0.09; // 9% residual (91% redução)
 
   return (
     <div className="space-y-3">
@@ -37,19 +39,18 @@ export default function ComparativeCharts({ data }) {
         <Plot
           data={[
             {
-              x: ['Hull Vent', 'LP Flare', 'HP Flare', 'TOTAL'],
-              y: [reducaoHull, reducaoLP, reducaoHP, reducaoEmissoes],
+              x: ['LP Flare + Hull Vent', 'HP Flare', 'TOTAL'],
+              y: [reducaoLPHull, reducaoHP, reducaoEmissoes],
               type: 'bar',
               marker: {
-                color: ['#a0d8ef', '#60b8d4', '#20a8c4', '#10b981'],
+                color: ['#60b8d4', '#20a8c4', '#10b981'],
                 line: {
                   color: '#059669',
                   width: 1.5
                 }
               },
               text: [
-                `${NumberFormatter.format(reducaoHull, 0)}`,
-                `${NumberFormatter.format(reducaoLP, 0)}`,
+                `${NumberFormatter.format(reducaoLPHull, 0)}`,
                 `${NumberFormatter.format(reducaoHP, 0)}`,
                 `${NumberFormatter.format(reducaoEmissoes, 0)}`
               ],
@@ -66,11 +67,15 @@ export default function ComparativeCharts({ data }) {
           layout={{
             title: {
               text: '',
-              font: { size: 14, family: 'Arial, sans-serif' }
+              font: { size: 14, family: 'Arial, sans-serif' },
+              x: 0.5,
+              xanchor: 'center'
             },
             xaxis: {
               title: '',
-              tickfont: { size: 10, family: 'Arial, sans-serif' }
+              tickfont: { size: 10, family: 'Arial, sans-serif' },
+              titlefont: { size: 10 },
+              titlestandoff: 25
             },
             yaxis: {
               title: { text: 'Redução (tCO₂eq/ano)', font: { size: 10 } },
@@ -83,7 +88,12 @@ export default function ComparativeCharts({ data }) {
             margin: { t: 20, b: 40, l: 60, r: 20 },
             showlegend: false
           }}
-          config={{ responsive: true, displayModeBar: false }}
+          config={{
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+            displaylogo: false
+          }}
           style={{ width: '100%' }}
         />
       </div>
@@ -96,11 +106,10 @@ export default function ComparativeCharts({ data }) {
         <Plot
           data={[
             {
-              x: ['LP Flare', 'Hull Vent', 'HP Flare', 'TOTAL'],
+              x: ['LP Flare + Hull Vent', 'HP Flare', 'TOTAL'],
               y: [
+                cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull,
                 cenarioAtual.emissoes_lp_flare,
-                cenarioAtual.emissoes_hull,
-                cenarioAtual.emissoes_hp_flare,
                 cenarioAtual.emissoes_total
               ],
               name: 'Atual',
@@ -113,9 +122,8 @@ export default function ComparativeCharts({ data }) {
                 }
               },
               text: [
+                NumberFormatter.format(cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull, 0),
                 NumberFormatter.format(cenarioAtual.emissoes_lp_flare, 0),
-                NumberFormatter.format(cenarioAtual.emissoes_hull, 0),
-                NumberFormatter.format(cenarioAtual.emissoes_hp_flare, 0),
                 NumberFormatter.format(cenarioAtual.emissoes_total, 0)
               ],
               textposition: 'inside',
@@ -127,11 +135,10 @@ export default function ComparativeCharts({ data }) {
               hovertemplate: '<b>%{x}</b><br>Atual: %{y:,.0f} tCO₂eq/ano<extra></extra>'
             },
             {
-              x: ['LP Flare', 'Hull Vent', 'HP Flare', 'TOTAL'],
+              x: ['LP Flare + Hull Vent', 'HP Flare', 'TOTAL'],
               y: [
+                cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull,
                 cenarioProposto.emissoes_lp_flare,
-                cenarioProposto.emissoes_hull,
-                cenarioProposto.emissoes_hp_flare,
                 cenarioProposto.emissoes_total
               ],
               name: 'Proposto',
@@ -144,9 +151,8 @@ export default function ComparativeCharts({ data }) {
                 }
               },
               text: [
+                NumberFormatter.format(cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull, 0),
                 NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0),
-                NumberFormatter.format(cenarioProposto.emissoes_hull, 0),
-                NumberFormatter.format(cenarioProposto.emissoes_hp_flare, 0),
                 NumberFormatter.format(cenarioProposto.emissoes_total, 0)
               ],
               textposition: 'inside',
@@ -161,11 +167,14 @@ export default function ComparativeCharts({ data }) {
           layout={{
             title: {
               text: '',
-              font: { size: 14, family: 'Arial, sans-serif' }
+              font: { size: 14, family: 'Arial, sans-serif' },
+              x: 0.5,
+              xanchor: 'center'
             },
             xaxis: {
               title: { text: '', font: { size: 10 } },
-              tickfont: { size: 10 }
+              tickfont: { size: 10 },
+              titlestandoff: 25
             },
             yaxis: {
               title: { text: 'Emissões (tCO₂eq/ano)', font: { size: 10 } },
@@ -189,7 +198,12 @@ export default function ComparativeCharts({ data }) {
             },
             barmode: 'group'
           }}
-          config={{ responsive: true, displayModeBar: false }}
+          config={{
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+            displaylogo: false
+          }}
           style={{ width: '100%' }}
         />
       </div>
@@ -207,20 +221,19 @@ export default function ComparativeCharts({ data }) {
             <Plot
               data={[
                 {
-                  x: ['Hull Vent', 'LP Flare', 'HP Flare'],
-                  y: [vazaoHull, vazaoLPFlare, vazaoHPFlare],
+                  x: ['LP Flare + Hull Vent', 'HP Flare'],
+                  y: [vazaoHPFlare + vazaoHull, vazaoLPFlare],
                   type: 'bar',
                   marker: {
-                    color: ['#f59e0b', '#ef4444', '#f97316'],
+                    color: ['#ef4444', '#f97316'],
                     line: {
-                      color: ['#d97706', '#dc2626', '#ea580c'],
+                      color: ['#dc2626', '#ea580c'],
                       width: 1.5
                     }
                   },
                   text: [
-                    `${NumberFormatter.format(vazaoHull, 0)}`,
-                    `${NumberFormatter.format(vazaoLPFlare, 0)}`,
-                    `${NumberFormatter.format(vazaoHPFlare, 0)}`
+                    `${NumberFormatter.format(vazaoHPFlare + vazaoHull, 0)}`,
+                    `${NumberFormatter.format(vazaoLPFlare, 0)}`
                   ],
                   textposition: 'inside',
                   textfont: {
@@ -234,10 +247,13 @@ export default function ComparativeCharts({ data }) {
               layout={{
                 title: {
                   text: '',
-                  font: { size: 11, family: 'Arial, sans-serif' }
+                  font: { size: 11, family: 'Arial, sans-serif' },
+                  x: 0.5,
+                  xanchor: 'center'
                 },
                 xaxis: {
-                  tickfont: { size: 9 }
+                  tickfont: { size: 9 },
+                  titlestandoff: 25
                 },
                 yaxis: {
                   title: { text: 'Vazão (Sm³/d)', font: { size: 9 } },
@@ -250,7 +266,12 @@ export default function ComparativeCharts({ data }) {
                 margin: { t: 20, b: 40, l: 60, r: 10 },
                 showlegend: false
               }}
-              config={{ responsive: true, displayModeBar: false }}
+              config={{
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+            displaylogo: false
+          }}
               style={{ width: '100%' }}
             />
             <div className="text-center mt-1 text-xs font-semibold text-gray-700">
@@ -264,19 +285,18 @@ export default function ComparativeCharts({ data }) {
             <Plot
               data={[
                 {
-                  x: ['Hull Vent', 'LP Flare', 'HP Flare'],
-                  y: [vazaoHullProposto, vazaoLPProposto, vazaoHPProposto],
+                  x: ['LP Flare + Hull Vent', 'HP Flare'],
+                  y: [vazaoLPHullProposto, vazaoHPProposto],
                   type: 'bar',
                   marker: {
-                    color: ['#10b981', '#3b82f6', '#06b6d4'],
+                    color: ['#10b981', '#06b6d4'],
                     line: {
-                      color: ['#059669', '#2563eb', '#0891b2'],
+                      color: ['#059669', '#0891b2'],
                       width: 1.5
                     }
                   },
                   text: [
-                    `${NumberFormatter.format(vazaoHullProposto, 0)}`,
-                    `${NumberFormatter.format(vazaoLPProposto, 0)}`,
+                    `${NumberFormatter.format(vazaoLPHullProposto, 0)}`,
                     `${NumberFormatter.format(vazaoHPProposto, 0)}`
                   ],
                   textposition: 'inside',
@@ -291,10 +311,13 @@ export default function ComparativeCharts({ data }) {
               layout={{
                 title: {
                   text: '',
-                  font: { size: 11, family: 'Arial, sans-serif' }
+                  font: { size: 11, family: 'Arial, sans-serif' },
+                  x: 0.5,
+                  xanchor: 'center'
                 },
                 xaxis: {
-                  tickfont: { size: 9 }
+                  tickfont: { size: 9 },
+                  titlestandoff: 25
                 },
                 yaxis: {
                   title: { text: 'Vazão (Sm³/d)', font: { size: 9 } },
@@ -307,12 +330,17 @@ export default function ComparativeCharts({ data }) {
                 margin: { t: 20, b: 40, l: 60, r: 10 },
                 showlegend: false
               }}
-              config={{ responsive: true, displayModeBar: false }}
+              config={{
+            responsive: true,
+            displayModeBar: true,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+            displaylogo: false
+          }}
               style={{ width: '100%' }}
             />
             <div className="text-center mt-1 text-xs font-semibold text-green-700">
-              Total: {NumberFormatter.format((vazaoHullProposto + vazaoLPProposto + vazaoHPProposto) / 1000, 1)} KSm³/d
-              (↓{NumberFormatter.format((1 - (vazaoHullProposto + vazaoLPProposto + vazaoHPProposto) / (vazaoHull + vazaoLPFlare + vazaoHPFlare)) * 100, 1)}%)
+              Total: {NumberFormatter.format((vazaoLPHullProposto + vazaoHPProposto) / 1000, 1)} KSm³/d
+              (↓{NumberFormatter.format((1 - (vazaoLPHullProposto + vazaoHPProposto) / (vazaoHull + vazaoLPFlare + vazaoHPFlare)) * 100, 1)}%)
             </div>
           </div>
         </div>

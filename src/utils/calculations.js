@@ -51,7 +51,7 @@ export class EmissionCalculator {
   static calcularCenarioAtual(data) {
     const vazaoLPFlare = (data.monitoring?.totals?.totalLP || 27900);
     const vazaoHPFlare = (data.monitoring?.totals?.totalHP || 40000);
-    const vazaoHull = 1728000; // Hull vent padrão (Sm³/d)
+    const vazaoHull = 0; // Hull vent (sem dados)
 
     // Emissões SOMENTE de flare (combustão)
     const emissoesLPFlare = this.calcularEmissoesCO2eq(vazaoLPFlare);
@@ -83,9 +83,9 @@ export class EmissionCalculator {
    * @returns {Object} Emissões por fonte
    */
   static calcularCenarioProposto(data, eficienciaRecuperacao = 0.85) {
-    const vazaoLPFlare = (data.monitoring?.totals?.totalLP || 0);
-    const vazaoHPFlare = (data.monitoring?.totals?.totalHP || 0);
-    const vazaoHull = 1728000;
+    const vazaoLPFlare = (data.monitoring?.totals?.totalLP || 27900);
+    const vazaoHPFlare = (data.monitoring?.totals?.totalHP || 40000);
+    const vazaoHull = 0; // Hull vent (sem dados)
 
     // Com sistema de recuperação de flare
     const vazaoRecuperada = (vazaoLPFlare + vazaoHPFlare) * eficienciaRecuperacao;

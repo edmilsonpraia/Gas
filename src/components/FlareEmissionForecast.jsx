@@ -567,7 +567,7 @@ export default function FlareEmissionForecast({ data }) {
 
   const layout = {
     title: {
-      text: 'Previsão: Sistema Atual vs Sistema Proposto',
+      text: 'Previsão de Queima',
       font: { size: 18, weight: 700, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {

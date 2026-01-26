@@ -25,12 +25,12 @@ export default function MethodologyFormulas({ data }) {
   };
 
   // Dados para exemplos de cálculo
-  const vazaoLPFlare = data.monitoring?.totals?.totalLP || 18000;
-  const vazaoHPFlare = data.monitoring?.totals?.totalHP || 26000;
-  const vazaoHull = 1728000; // Valor padrão Hull Vent
+  const vazaoLPFlare = data.monitoring?.totals?.totalLP || 27900;
+  const vazaoHPFlare = data.monitoring?.totals?.totalHP || 40000;
+  const vazaoHull = 0;
   const taxaRecuperacaoHull = 95;
-  const taxaReducaoLP = 85;
-  const taxaReducaoHP = 85;
+  const taxaReducaoLP = 91;
+  const taxaReducaoHP = 91;
 
   return (
     <div className="space-y-6">

@@ -26,13 +26,16 @@ function App() {
     const saved = localStorage.getItem('theme');
     return saved === 'dark';
   });
-  // Estado inicial com valores corretos
+  // Estado inicial - DISTRIBUIÇÃO CORRECTA:
+  // Hull Vent: 40.000 Sm³/d → 40.150 tCO₂eq/ano (MAIOR)
+  // LP Flare: 19.925 Sm³/d → 20.000 tCO₂eq/ano (MÉDIO)
+  // HP Flare: 7.975 Sm³/d → 8.005 tCO₂eq/ano (MENOR)
   const initialData = {
     monitoring: {
-      hpFlare: { comp1: 23000, comp2: 17000 },
-      lpFlare: { comp3: 15000, comp4: 12900 },
+      hpFlare: { comp1: 4000, comp2: 3975 },      // Total: 7.975 Sm³/d
+      lpFlare: { comp3: 10000, comp4: 9925 },     // Total: 19.925 Sm³/d
       additional: { param1: 14.830, param2: 26.080 },
-      totals: { totalHP: 40000, totalLP: 27900, totalFlaring: 67900 }
+      totals: { totalHP: 7975, totalLP: 19925, totalHull: 40000, totalFlaring: 67900 }
     },
     compressors: {
       hp: { vazao: 250000, pressao: 151, temperatura: 80 },
