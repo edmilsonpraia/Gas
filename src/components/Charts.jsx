@@ -1,11 +1,14 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
 import { EmissionCalculator } from '../utils/calculations';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Gráfico de comparação de vazões
  */
 export function FlowComparisonChart({ data }) {
+  const { t } = useLanguage();
+
   const plotData = [
     {
       x: ['HP Comp 1', 'HP Comp 2', 'LP Comp 3', 'LP Comp 4'],
@@ -36,15 +39,15 @@ export function FlowComparisonChart({ data }) {
 
   const layout = {
     title: {
-      text: 'Comparação de Vazões - HP/LP Flare',
+      text: t.flowComparisonChart,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Componentes', font: { size: 11, weight: 500 } },
+      title: { text: t.components, font: { size: 11, weight: 500 } },
       gridcolor: '#e5e7eb'
     },
     yaxis: {
-      title: { text: 'Vazão (Sm³/d)', font: { size: 11, weight: 500 } },
+      title: { text: `${t.flow} (${t.sm3d})`, font: { size: 11, weight: 500 } },
       tickformat: ',.0f',
       gridcolor: '#e5e7eb'
     },

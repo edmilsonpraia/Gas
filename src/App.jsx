@@ -19,7 +19,7 @@ import MethodologyFormulas from './components/MethodologyFormulas';
 import FlareEmissionForecast from './components/FlareEmissionForecast';
 import ComparativeCharts from './components/ComparativeCharts';
 import { EmissionCalculator } from './utils/calculations';
-import { translations } from './utils/translations';
+import { useLanguage } from './contexts/LanguageContext';
 import * as XLSX from 'xlsx';
 
 function App() {
@@ -28,10 +28,10 @@ function App() {
     const saved = localStorage.getItem('theme');
     return saved === 'dark';
   });
-  const [language, setLanguage] = useState(() => {
-    const saved = localStorage.getItem('language');
-    return saved || 'pt';
-  });
+
+  // Use language context
+  const { language, toggleLanguage, t } = useLanguage();
+
   // Estado inicial - DISTRIBUIÇÃO CORRECTA:
   // Hull Vent: 40.000 Sm³/d → 40.150 tCO₂eq/ano (MAIOR)
   // LP Flare: 19.925 Sm³/d → 20.000 tCO₂eq/ano (MÉDIO)
@@ -52,9 +52,6 @@ function App() {
 
   const [data, setData] = useState(initialData);
 
-  // Get translations for current language
-  const t = translations[language];
-
   // Sync dark mode with document.body and localStorage
   useEffect(() => {
     if (isDarkMode) {
@@ -65,11 +62,6 @@ function App() {
       localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
-
-  // Sync language with localStorage
-  useEffect(() => {
-    localStorage.setItem('language', language);
-  }, [language]);
 
   const handleDataChange = (newData) => {
     setData(newData);
@@ -207,7 +199,7 @@ function App() {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <LanguageToggle language={language} onToggle={() => setLanguage(language === 'pt' ? 'en' : 'pt')} />
+                <LanguageToggle language={language} onToggle={toggleLanguage} />
                 <ThemeToggle isDark={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} />
                 <button
                   onClick={() => handleExport('excel')}
