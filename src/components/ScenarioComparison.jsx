@@ -102,15 +102,15 @@ export default function ScenarioComparison({ data }) {
               <span className="font-semibold text-gray-900">70 Nm³/m³</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-700">Salinidade do Reservatório:</span>
+              <span className="text-gray-700">{t.reservoirSalinity}:</span>
               <span className="font-semibold text-gray-900">120 g/l</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-700">Bário:</span>
+              <span className="text-gray-700">{t.barium}:</span>
               <span className="font-semibold text-gray-900">200 ppm</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-700">BSW:</span>
+              <span className="text-gray-700">{t.bsw}:</span>
               <span className="font-semibold text-gray-900">0 - 90%</span>
             </div>
             <div className="flex justify-between">
@@ -122,36 +122,36 @@ export default function ScenarioComparison({ data }) {
 
         {/* Especificações de Exportação e Água Produzida */}
         <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-          <h4 className="text-sm font-semibold text-gray-800 mb-2">📋 Especificações de Exportação</h4>
+          <h4 className="text-sm font-semibold text-gray-800 mb-2">📋 {t.exportSpecifications}</h4>
 
           <div className="mb-3">
-            <h5 className="text-xs font-semibold text-gray-700 mb-1">Óleo de Exportação:</h5>
+            <h5 className="text-xs font-semibold text-gray-700 mb-1">{t.exportOil}:</h5>
             <div className="space-y-0.5 text-xs">
               <div className="flex justify-between">
-                <span className="text-gray-600">Salinidade:</span>
+                <span className="text-gray-600">{t.salinity}:</span>
                 <span className="font-medium text-gray-900">&lt; 80 mg/l</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">BSW:</span>
+                <span className="text-gray-600">{t.bsw}:</span>
                 <span className="font-medium text-gray-900">&lt; 0.5%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">RVP:</span>
+                <span className="text-gray-600">{t.rvp}:</span>
                 <span className="font-medium text-gray-900">&lt; 10 psi</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Temperatura:</span>
+                <span className="text-gray-600">{t.temperature}:</span>
                 <span className="font-medium text-gray-900">45°C</span>
               </div>
             </div>
           </div>
 
           <div className="mb-3">
-            <h5 className="text-xs font-semibold text-gray-700 mb-1">Água Produzida:</h5>
+            <h5 className="text-xs font-semibold text-gray-700 mb-1">{t.producedWater}:</h5>
             <div className="space-y-0.5 text-xs">
               <div className="flex justify-between">
-                <span className="text-gray-600">Disposição:</span>
-                <span className="font-medium text-gray-900">Sem descarte</span>
+                <span className="text-gray-600">{t.disposal}:</span>
+                <span className="font-medium text-gray-900">{t.noDischarge}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">HC:</span>
@@ -161,7 +161,7 @@ export default function ScenarioComparison({ data }) {
           </div>
 
           <div>
-            <h5 className="text-xs font-semibold text-gray-700 mb-1">Água de Slops:</h5>
+            <h5 className="text-xs font-semibold text-gray-700 mb-1">{t.slopsWater}:</h5>
             <div className="space-y-0.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-600">HC:</span>
@@ -179,24 +179,24 @@ export default function ScenarioComparison({ data }) {
         <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
           <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
             <AlertTriangle className="text-red-600" size={16} />
-            Cenário Atual
+            {t.currentScenarioTitle}
           </h3>
 
           {/* Imagem do Sistema Atual */}
           <div className="mb-2">
             <img
               src="/01.jpeg"
-              alt="Sistema Atual - Método Convencional"
+              alt={`${t.currentSystem} - ${t.conventionalMethod}`}
               className="w-full rounded border border-gray-300"
             />
             <p className="text-xs text-gray-500 text-center mt-1">
-              Sistema Atual - Método Convencional
+              {t.currentSystem} - {t.conventionalMethod}
             </p>
           </div>
 
           {/* Legenda Técnica */}
           <div className="bg-gray-50 p-2 rounded mb-2 text-xs">
-            <h5 className="font-semibold text-gray-700 mb-1">Legenda:</h5>
+            <h5 className="font-semibold text-gray-700 mb-1">{t.legend}:</h5>
             <ul className="space-y-0.5 text-gray-600">
               <li>• <strong>Sep. Trifásico LP:</strong> Separa óleo, água e gás</li>
               <li>• <strong>Hull Vent Blower:</strong> Ventilação do casco</li>
@@ -233,28 +233,28 @@ export default function ScenarioComparison({ data }) {
         <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
           <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
             <Leaf className="text-green-600" size={16} />
-            Cenário Proposto
+            {t.proposedScenarioTitle}
           </h3>
 
           {/* Imagem do Sistema Proposto */}
           <div className="mb-2">
             <img
               src="/02.jpeg"
-              alt="Sistema Proposto - Método de Recuperação"
+              alt={`${t.proposedSystem} - ${t.gasRecovery}`}
               className="w-full rounded border border-green-500"
             />
             <p className="text-xs text-gray-500 text-center mt-1">
-              Sistema Proposto - Recuperação de Gás
+              {t.proposedSystem} - {t.gasRecovery}
             </p>
           </div>
 
           {/* Benefícios */}
           <div className="bg-green-50 p-2 rounded mb-2">
-            <h5 className="font-semibold text-green-800 mb-1 text-xs">Benefícios:</h5>
+            <h5 className="font-semibold text-green-800 mb-1 text-xs">{t.benefits}:</h5>
             <ul className="space-y-0.5 text-xs text-green-700">
-              <li>✓ Redução {reducaoPercentual.toFixed(1)}% emissões</li>
-              <li>✓ Captura de gás dos flares</li>
-              <li>✓ Reaproveitamento do gás</li>
+              <li>✓ {t.reductionPercent.replace('{percent}', reducaoPercentual.toFixed(1))}</li>
+              <li>✓ {t.flareGasCapture}</li>
+              <li>✓ {t.gasReuse}</li>
             </ul>
           </div>
 
@@ -285,13 +285,13 @@ export default function ScenarioComparison({ data }) {
             <div className="bg-green-50 border-l-2 border-green-500 p-2 rounded">
               <div className="flex items-center gap-1 mb-1">
                 <TrendingDown size={14} className="text-green-600" />
-                <span className="font-semibold text-green-900 text-xs">Redução</span>
+                <span className="font-semibold text-green-900 text-xs">{t.reduction}</span>
               </div>
               <p className="text-lg font-bold text-green-700">
                 {NumberFormatter.format(reducaoEmissoes, 0)}
               </p>
               <p className="text-xs text-green-600">
-                ({reducaoPercentual.toFixed(1)}% redução)
+                ({reducaoPercentual.toFixed(1)}% {t.reduction.toLowerCase()})
               </p>
             </div>
           </div>
@@ -302,7 +302,7 @@ export default function ScenarioComparison({ data }) {
       <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
           <Leaf className="text-green-600" size={16} />
-          Impacto Ambiental
+          {t.environmentalImpact}
         </h3>
 
         <div className="grid grid-cols-3 gap-2">
@@ -311,7 +311,7 @@ export default function ScenarioComparison({ data }) {
             <div className="text-lg font-bold text-gray-900">
               {NumberFormatter.format(equivalencias.carros, 0)}
             </div>
-            <div className="text-xs text-gray-600">carros/ano</div>
+            <div className="text-xs text-gray-600">{t.carsPerYear}</div>
           </div>
 
           <div className="text-center p-3 bg-gray-50 rounded border border-gray-200">
@@ -319,7 +319,7 @@ export default function ScenarioComparison({ data }) {
             <div className="text-lg font-bold text-gray-900">
               {NumberFormatter.format(equivalencias.arvores, 0)}
             </div>
-            <div className="text-xs text-gray-600">árvores</div>
+            <div className="text-xs text-gray-600">{t.trees}</div>
           </div>
 
           <div className="text-center p-3 bg-gray-50 rounded border border-gray-200">
@@ -327,7 +327,7 @@ export default function ScenarioComparison({ data }) {
             <div className="text-lg font-bold text-gray-900">
               {NumberFormatter.format(equivalencias.casas, 0)}
             </div>
-            <div className="text-xs text-gray-600">casas/ano</div>
+            <div className="text-xs text-gray-600">{t.housesPerYear}</div>
           </div>
         </div>
       </div>
