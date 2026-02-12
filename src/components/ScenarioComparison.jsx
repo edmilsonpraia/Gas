@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { AlertTriangle, TrendingDown, Leaf, ChevronDown, ChevronUp } from 'lucide-react';
 import { NumberFormatter } from '../utils/unitConverter';
 import { EmissionCalculator } from '../utils/calculations';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Componente de Comparação de Cenários (Atual vs Proposto)
  */
 export default function ScenarioComparison({ data }) {
+  const { t } = useLanguage();
   const [showSpecs, setShowSpecs] = useState(true);
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
@@ -30,42 +32,42 @@ export default function ScenarioComparison({ data }) {
         <div className="bg-gradient-to-br from-red-600 to-red-700 text-white rounded-lg p-4 shadow-md">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={16} />
-            <h3 className="text-xs font-semibold">Emissões GEE (Antes)</h3>
+            <h3 className="text-xs font-semibold">{t.ghgEmissionsBefore}</h3>
           </div>
           <p className="text-2xl font-bold mb-1">
             {NumberFormatter.format(cenarioAtual.emissoes_total, 0)}
           </p>
-          <p className="text-xs text-red-100">tCO₂eq/ano - Atual</p>
+          <p className="text-xs text-red-100">{t.tco2eq} - {t.current}</p>
         </div>
 
         {/* Emissões GEE - Depois */}
         <div className="bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-lg p-4 shadow-md">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown size={16} />
-            <h3 className="text-xs font-semibold">Emissões GEE (Depois)</h3>
+            <h3 className="text-xs font-semibold">{t.ghgEmissionsAfter}</h3>
           </div>
           <p className="text-2xl font-bold mb-1">
             {NumberFormatter.format(cenarioProposto.emissoes_total, 0)}
           </p>
-          <p className="text-xs text-green-100">tCO₂eq/ano - Proposto</p>
+          <p className="text-xs text-green-100">{t.tco2eq} - {t.proposed}</p>
         </div>
 
         {/* Gás Queimado */}
         <div className="bg-gradient-to-br from-orange-600 to-red-600 text-white rounded-lg p-4 shadow-md">
-          <h3 className="text-xs font-semibold mb-2">🔥 Gás Queimado</h3>
+          <h3 className="text-xs font-semibold mb-2">🔥 {t.gasBurned}</h3>
           <p className="text-2xl font-bold mb-1">
             {NumberFormatter.format(gasQueimatoFlares / 1000, 1)}
           </p>
-          <p className="text-xs text-orange-100">KSm³/d - Flares Atual</p>
+          <p className="text-xs text-orange-100">K{t.sm3d} - {t.currentFlares}</p>
         </div>
 
         {/* Gás Recuperado */}
         <div className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-lg p-4 shadow-md">
-          <h3 className="text-xs font-semibold mb-2">♻️ Gás Recuperado</h3>
+          <h3 className="text-xs font-semibold mb-2">♻️ {t.gasRecovered}</h3>
           <p className="text-2xl font-bold mb-1">
             {NumberFormatter.format(gasRecuperadoFlares / 1000, 1)}
           </p>
-          <p className="text-xs text-blue-100">KSm³/d - Proposto</p>
+          <p className="text-xs text-blue-100">K{t.sm3d} - {t.proposed}</p>
         </div>
       </div>
 
@@ -76,7 +78,7 @@ export default function ScenarioComparison({ data }) {
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
         >
           {showSpecs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          {showSpecs ? 'Ocultar Especificações' : 'Mostrar Especificações'}
+          {showSpecs ? t.hideSpecifications : t.showSpecifications}
         </button>
       </div>
 
@@ -85,18 +87,18 @@ export default function ScenarioComparison({ data }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-fade-in">
           {/* Especificações de Óleo, Água e Gás */}
           <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-          <h4 className="text-sm font-semibold text-gray-800 mb-2">⚗️ Óleo, Água e Gás</h4>
+          <h4 className="text-sm font-semibold text-gray-800 mb-2">⚗️ {t.oilWaterGas}</h4>
           <div className="space-y-1 text-xs">
             <div className="flex justify-between">
-              <span className="text-gray-700">Densidade:</span>
+              <span className="text-gray-700">{t.density}:</span>
               <span className="font-semibold text-gray-900">920 kg/m³</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-700">Viscosidade:</span>
+              <span className="text-gray-700">{t.viscosity}:</span>
               <span className="font-semibold text-gray-900">5.5 cPo @ 40°C</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-700">GOR:</span>
+              <span className="text-gray-700">{t.gor}:</span>
               <span className="font-semibold text-gray-900">70 Nm³/m³</span>
             </div>
             <div className="flex justify-between">
