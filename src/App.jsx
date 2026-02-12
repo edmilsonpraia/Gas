@@ -14,10 +14,12 @@ import ScenarioComparison from './components/ScenarioComparison';
 import TechnicalCalculator from './components/TechnicalCalculator';
 import TechnicalAnalysis from './components/TechnicalAnalysis';
 import ThemeToggle from './components/ThemeToggle';
+import LanguageToggle from './components/LanguageToggle';
 import MethodologyFormulas from './components/MethodologyFormulas';
 import FlareEmissionForecast from './components/FlareEmissionForecast';
 import ComparativeCharts from './components/ComparativeCharts';
 import { EmissionCalculator } from './utils/calculations';
+import { translations } from './utils/translations';
 import * as XLSX from 'xlsx';
 
 function App() {
@@ -25,6 +27,10 @@ function App() {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark';
+  });
+  const [language, setLanguage] = useState(() => {
+    const saved = localStorage.getItem('language');
+    return saved || 'pt';
   });
   // Estado inicial - DISTRIBUIÇÃO CORRECTA:
   // Hull Vent: 40.000 Sm³/d → 40.150 tCO₂eq/ano (MAIOR)
@@ -46,6 +52,9 @@ function App() {
 
   const [data, setData] = useState(initialData);
 
+  // Get translations for current language
+  const t = translations[language];
+
   // Sync dark mode with document.body and localStorage
   useEffect(() => {
     if (isDarkMode) {
@@ -56,6 +65,11 @@ function App() {
       localStorage.setItem('theme', 'light');
     }
   }, [isDarkMode]);
+
+  // Sync language with localStorage
+  useEffect(() => {
+    localStorage.setItem('language', language);
+  }, [language]);
 
   const handleDataChange = (newData) => {
     setData(newData);
@@ -161,12 +175,12 @@ function App() {
   };
 
   const tabs = [
-    { id: 'overview', label: 'Dashboard', icon: Activity },
-    { id: 'calculator', label: 'Calculadora', icon: Calculator },
-    { id: 'analysis', label: 'Análise', icon: Microscope },
-    { id: 'charts', label: 'Gráficos', icon: TrendingDown },
-    { id: 'advanced', label: 'Avançado', icon: LineChart },
-    { id: 'reports', label: 'Relatórios', icon: FileText }
+    { id: 'overview', label: t.dashboard, icon: Activity },
+    { id: 'calculator', label: t.calculator, icon: Calculator },
+    { id: 'analysis', label: t.analysis, icon: Microscope },
+    { id: 'charts', label: t.charts, icon: TrendingDown },
+    { id: 'advanced', label: t.advanced, icon: LineChart },
+    { id: 'reports', label: t.reports, icon: FileText }
   ];
 
   return (
@@ -183,30 +197,31 @@ function App() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Flame size={24} />
-                  <h1 className="text-xl font-bold">Simulador Gas Recovery</h1>
+                  <h1 className="text-xl font-bold">{t.appTitle}</h1>
                 </div>
                 <p className="text-primary-100 text-sm">
-                  Estratégias de Redução de Queima de Gás - Campo Magnólia
+                  {t.appSubtitle}
                 </p>
                 <p className="text-primary-200 text-xs mt-0.5">
-                  TCC - Engenharia de Petróleos | UCAN 2025 | Leodumira Irina Pereira Lourenço
+                  {t.appFooter}
                 </p>
               </div>
               <div className="flex items-center gap-3">
+                <LanguageToggle language={language} onToggle={() => setLanguage(language === 'pt' ? 'en' : 'pt')} />
                 <ThemeToggle isDark={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} />
                 <button
                   onClick={() => handleExport('excel')}
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <Download size={18} />
-                  <span className="text-sm font-medium">Excel</span>
+                  <span className="text-sm font-medium">{t.exportExcel}</span>
                 </button>
                 <button
                   onClick={() => handleExport('pdf')}
                   className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg flex items-center gap-2 transition-colors"
                 >
                   <Download size={18} />
-                  <span className="text-sm font-medium">PDF</span>
+                  <span className="text-sm font-medium">{t.exportPDF}</span>
                 </button>
               </div>
             </div>
@@ -247,8 +262,8 @@ function App() {
                 <div className="flex items-center gap-3">
                   <TrendingDown size={24} className="text-blue-600" />
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">Gráficos Comparativos</h2>
-                    <p className="text-xs text-gray-600">Sistema Atual vs Sistema Proposto</p>
+                    <h2 className="text-xl font-bold text-gray-900">{t.chartsTitle}</h2>
+                    <p className="text-xs text-gray-600">{t.chartsSubtitle}</p>
                   </div>
                 </div>
               </div>
@@ -270,8 +285,8 @@ function App() {
                 <div className="flex items-center gap-3">
                   <LineChart size={32} className="text-purple-600" />
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Análises Avançadas</h2>
-                    <p className="text-gray-600">Metodologia e fórmulas matemáticas do simulador</p>
+                    <h2 className="text-2xl font-bold text-gray-900">{t.advancedTitle}</h2>
+                    <p className="text-gray-600">{t.advancedSubtitle}</p>
                   </div>
                 </div>
               </div>
@@ -291,11 +306,11 @@ function App() {
 
           {activeTab === 'reports' && (
             <div className="card animate-fade-in">
-              <h2 className="card-header">Relatórios e Exportação</h2>
+              <h2 className="card-header">{t.reportsTitle}</h2>
               <div className="space-y-4">
                 <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
                   <p className="text-sm text-green-800">
-                    ✅ Use os botões "Excel" e "PDF" no cabeçalho para exportar os dados.
+                    {t.reportsMessage}
                   </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -304,21 +319,21 @@ function App() {
                     className="btn-primary flex items-center justify-center gap-2"
                   >
                     <Download size={18} />
-                    Exportar Excel
+                    {t.exportExcelBtn}
                   </button>
                   <button
                     onClick={() => handleExport('json')}
                     className="btn-secondary flex items-center justify-center gap-2"
                   >
                     <Download size={18} />
-                    Exportar JSON
+                    {t.exportJSONBtn}
                   </button>
                   <button
                     onClick={() => handleExport('pdf')}
                     className="btn-primary flex items-center justify-center gap-2"
                   >
                     <Download size={18} />
-                    Exportar PDF
+                    {t.exportPDFBtn}
                   </button>
                 </div>
               </div>
