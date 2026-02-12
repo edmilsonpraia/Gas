@@ -72,27 +72,28 @@ export function FlowComparisonChart({ data }) {
  * Gráfico de pizza - Distribuição HP vs LP
  */
 export function HPLPDistributionChart({ data }) {
+  const { t } = useLanguage();
   const totalHP = data.monitoring?.totals?.totalHP || 0;
   const totalLP = data.monitoring?.totals?.totalLP || 0;
 
   const plotData = [
     {
       values: [totalHP, totalLP],
-      labels: ['HP Flare', 'LP Flare'],
+      labels: [t.hpFlare, t.lpFlare],
       type: 'pie',
       marker: {
         colors: ['#dc2626', '#f87171']
       },
       textinfo: 'label+percent+value',
-      texttemplate: '<b>%{label}</b><br>%{value:,.0f} Sm³/d<br>(%{percent})',
-      hovertemplate: '<b>%{label}</b><br>%{value:,.0f} Sm³/d<br>%{percent}<extra></extra>',
+      texttemplate: `<b>%{label}</b><br>%{value:,.0f} ${t.sm3d}<br>(%{percent})`,
+      hovertemplate: `<b>%{label}</b><br>%{value:,.0f} ${t.sm3d}<br>%{percent}<extra></extra>`,
       hole: 0.4
     }
   ];
 
   const layout = {
     title: {
-      text: 'Distribuição HP vs LP Flare',
+      text: t.hpLpDistributionChart,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     annotations: [
@@ -124,56 +125,58 @@ export function HPLPDistributionChart({ data }) {
  * Gráfico de linha - Pressão vs Temperatura dos Compressores
  */
 export function PressureTempChart({ data }) {
+  const { t } = useLanguage();
+
   const plotData = [
     {
-      x: ['HP Compressor', 'LP Compressor', 'Blower'],
+      x: [t.hpCompressor, t.lpCompressor, t.blower],
       y: [
         data.compressors?.hp?.pressao || 0,
         data.compressors?.lp?.pressao || 0,
         data.compressors?.blower?.pressao || 0
       ],
-      name: 'Pressão',
+      name: t.pressure,
       type: 'bar',
       yaxis: 'y',
       marker: {
         color: '#3b82f6',
         line: { color: '#1e40af', width: 1.5 }
       },
-      hovertemplate: '<b>%{x}</b><br>Pressão: %{y:.2f} bar<extra></extra>'
+      hovertemplate: `<b>%{x}</b><br>${t.pressure}: %{y:.2f} ${t.bar}<extra></extra>`
     },
     {
-      x: ['HP Compressor', 'LP Compressor', 'Blower'],
+      x: [t.hpCompressor, t.lpCompressor, t.blower],
       y: [
         data.compressors?.hp?.temperatura || 0,
         data.compressors?.lp?.temperatura || 0,
         data.compressors?.blower?.temperatura || 0
       ],
-      name: 'Temperatura',
+      name: t.temperature,
       type: 'scatter',
       mode: 'lines+markers',
       yaxis: 'y2',
       marker: { color: '#ef4444', size: 12, line: { color: '#991b1b', width: 2 } },
       line: { color: '#ef4444', width: 3 },
-      hovertemplate: '<b>%{x}</b><br>Temperatura: %{y:.1f} °C<extra></extra>'
+      hovertemplate: `<b>%{x}</b><br>${t.temperature}: %{y:.1f} ${t.celsius}<extra></extra>`
     }
   ];
 
   const layout = {
     title: {
-      text: 'Pressão e Temperatura dos Compressores',
+      text: t.pressureTempChart,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Equipamentos', font: { size: 11, weight: 500 } },
+      title: { text: t.equipment, font: { size: 11, weight: 500 } },
       gridcolor: '#e5e7eb'
     },
     yaxis: {
-      title: { text: 'Pressão (bar)', font: { size: 11, weight: 500 } },
+      title: { text: `${t.pressure} (${t.bar})`, font: { size: 11, weight: 500 } },
       side: 'left',
       gridcolor: '#e5e7eb'
     },
     yaxis2: {
-      title: { text: 'Temperatura (°C)', font: { size: 11, weight: 500 } },
+      title: { text: `${t.temperature} (${t.celsius})`, font: { size: 11, weight: 500 } },
       overlaying: 'y',
       side: 'right',
       gridcolor: '#f3f4f6'
@@ -207,9 +210,11 @@ export function PressureTempChart({ data }) {
  * Gráfico de vazões dos compressores
  */
 export function CompressorFlowChart({ data }) {
+  const { t } = useLanguage();
+
   const plotData = [
     {
-      x: ['HP Compressor', 'LP Compressor', 'Blower'],
+      x: [t.hpCompressor, t.lpCompressor, t.blower],
       y: [
         data.compressors?.hp?.vazao || 0,
         data.compressors?.lp?.vazao || 0,
@@ -229,21 +234,21 @@ export function CompressorFlowChart({ data }) {
         (data.compressors?.blower?.vazao || 0).toLocaleString('pt-BR')
       ],
       textposition: 'outside',
-      hovertemplate: '<b>%{x}</b><br>%{y:,.0f} Sm³/d<extra></extra>'
+      hovertemplate: `<b>%{x}</b><br>%{y:,.0f} ${t.sm3d}<extra></extra>`
     }
   ];
 
   const layout = {
     title: {
-      text: 'Vazões dos Compressores',
+      text: t.compressorFlowChart,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Equipamentos', font: { size: 11, weight: 500 } },
+      title: { text: t.equipment, font: { size: 11, weight: 500 } },
       gridcolor: '#e5e7eb'
     },
     yaxis: {
-      title: { text: 'Vazão (Sm³/d)', font: { size: 11, weight: 500 } },
+      title: { text: `${t.flow} (${t.sm3d})`, font: { size: 11, weight: 500 } },
       tickformat: ',.0f',
       gridcolor: '#e5e7eb'
     },
@@ -796,7 +801,7 @@ export function GasFlowSankeyChart({ data }) {
  * Gráfico de Impacto Ambiental (Equivalências)
  */
 export function EnvironmentalImpactChart({ data }) {
-
+  const { t } = useLanguage();
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
@@ -817,9 +822,9 @@ export function EnvironmentalImpactChart({ data }) {
 
   const plotData = [
     {
-      x: ['Carros Equivalentes', 'Árvores Necessárias', 'Residências Equivalentes'],
+      x: [t.equivalentCars, t.treesNeeded, t.equivalentHomes],
       y: [carrosAtual, arvoresAtual, residenciasAtual],
-      name: 'Sistema Atual',
+      name: t.currentSystem,
       type: 'bar',
       marker: { color: '#dc2626', line: { color: '#991b1b', width: 2 } },
       text: [
@@ -828,12 +833,12 @@ export function EnvironmentalImpactChart({ data }) {
         `${residenciasAtual.toFixed(0)}`
       ],
       textposition: 'outside',
-      hovertemplate: '<b>%{x}</b><br>Sistema Atual: %{y:,.0f}<extra></extra>'
+      hovertemplate: `<b>%{x}</b><br>${t.currentSystem}: %{y:,.0f}<extra></extra>`
     },
     {
-      x: ['Carros Equivalentes', 'Árvores Necessárias', 'Residências Equivalentes'],
+      x: [t.equivalentCars, t.treesNeeded, t.equivalentHomes],
       y: [carrosProposto, arvoresProposto, residenciasProposto],
-      name: 'Sistema Proposto',
+      name: t.proposedSystem,
       type: 'bar',
       marker: { color: '#10b981', line: { color: '#047857', width: 2 } },
       text: [
@@ -842,17 +847,17 @@ export function EnvironmentalImpactChart({ data }) {
         `${residenciasProposto.toFixed(0)}`
       ],
       textposition: 'outside',
-      hovertemplate: '<b>%{x}</b><br>Sistema Proposto: %{y:,.0f}<extra></extra>'
+      hovertemplate: `<b>%{x}</b><br>${t.proposedSystem}: %{y:,.0f}<extra></extra>`
     }
   ];
 
   const layout = {
     title: {
-      text: 'Impacto Ambiental: Equivalências',
+      text: t.environmentalImpactChart,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Equivalência', font: { size: 11, weight: 500 } },
+      title: { text: '', font: { size: 11, weight: 500 } },
       gridcolor: '#e5e7eb'
     },
     yaxis: {
@@ -890,7 +895,7 @@ export function EnvironmentalImpactChart({ data }) {
  * Gráfico de Eficiência do Sistema (Gauge)
  */
 export function SystemEfficiencyGauge({ data }) {
-
+  const { t } = useLanguage();
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
@@ -903,7 +908,7 @@ export function SystemEfficiencyGauge({ data }) {
       mode: 'gauge+number+delta',
       value: eficiencia,
       title: {
-        text: '<b>Eficiência de Redução</b>',
+        text: `<b>${t.systemEfficiencyGauge}</b>`,
         font: { size: 20, family: 'Segoe UI, sans-serif' }
       },
       delta: {
@@ -957,7 +962,7 @@ export function SystemEfficiencyGauge({ data }) {
  * Gráfico de Breakdown de Emissões (Sunburst)
  */
 export function EmissionsBreakdownSunburst({ data }) {
-
+  const { t } = useLanguage();
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
 
@@ -965,10 +970,10 @@ export function EmissionsBreakdownSunburst({ data }) {
     {
       type: 'sunburst',
       labels: [
-        'Total',
-        'LP Flare',
-        'HP Flare',
-        'Hull Vent',
+        t.total,
+        t.lpFlare,
+        t.hpFlare,
+        t.hullVent,
         'CO₂ (LP)',
         'CH₄ (LP)',
         'CO₂ (HP)',
@@ -978,15 +983,15 @@ export function EmissionsBreakdownSunburst({ data }) {
       ],
       parents: [
         '',
-        'Total',
-        'Total',
-        'Total',
-        'LP Flare',
-        'LP Flare',
-        'HP Flare',
-        'HP Flare',
-        'Hull Vent',
-        'Hull Vent'
+        t.total,
+        t.total,
+        t.total,
+        t.lpFlare,
+        t.lpFlare,
+        t.hpFlare,
+        t.hpFlare,
+        t.hullVent,
+        t.hullVent
       ],
       values: [
         cenarioAtual.emissoes_total,
@@ -1015,13 +1020,13 @@ export function EmissionsBreakdownSunburst({ data }) {
         ]
       },
       branchvalues: 'total',
-      hovertemplate: '<b>%{label}</b><br>%{value:.0f} tCO₂eq/ano<br>%{percentParent}<extra></extra>'
+      hovertemplate: `<b>%{label}</b><br>%{value:.0f} ${t.tco2eq}<br>%{percentParent}<extra></extra>`
     }
   ];
 
   const layout = {
     title: {
-      text: 'Breakdown Detalhado de Emissões - Sistema Atual',
+      text: t.emissionsBreakdownChart,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     plot_bgcolor: '#fafafa',
