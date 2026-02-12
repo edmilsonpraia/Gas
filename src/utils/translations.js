@@ -547,6 +547,11 @@ export const translations = {
     flow: 'Vazão',
     pressure: 'Pressão',
     temperature: 'Temperatura',
+
+    // UnitInput
+    conversions: 'Conversões',
+    calculator: 'Calculadora',
+    quickOperations: 'Operações rápidas:',
   },
 
   en: {
@@ -1097,5 +1102,10 @@ export const translations = {
     flow: 'Flow',
     pressure: 'Pressure',
     temperature: 'Temperature',
+
+    // UnitInput
+    conversions: 'Conversions',
+    calculator: 'Calculator',
+    quickOperations: 'Quick operations:',
   }
 };

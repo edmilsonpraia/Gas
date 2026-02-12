@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator as CalcIcon, ChevronDown, ChevronUp } from 'lucide-react';
 import { UnitConverter, Calculator, NumberFormatter } from '../utils/unitConverter';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Componente de input numérico com conversor de unidades integrado
@@ -17,6 +18,7 @@ export default function UnitInput({
   helpText = null,
   showCalculator = true
 }) {
+  const { t } = useLanguage();
   const units = UnitConverter.getUnits(unitType);
   const [value, setValue] = useState(defaultValue);
   const [selectedUnit, setSelectedUnit] = useState(defaultUnit || units[0]);
@@ -86,7 +88,7 @@ export default function UnitInput({
           className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
         >
           {showConversions ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          Conversões
+          {t.conversions}
         </button>
         {showCalculator && (
           <button
@@ -95,7 +97,7 @@ export default function UnitInput({
             className="text-xs text-primary-600 hover:text-primary-700 flex items-center gap-1"
           >
             <CalcIcon size={14} />
-            Calculadora
+            {t.calculator}
           </button>
         )}
       </div>
@@ -115,7 +117,7 @@ export default function UnitInput({
 
       {showCalc && (
         <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-200">
-          <div className="text-xs text-gray-600 mb-2">Operações rápidas:</div>
+          <div className="text-xs text-gray-600 mb-2">{t.quickOperations}</div>
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => applyQuickOp('double')}
