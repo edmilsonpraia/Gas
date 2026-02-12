@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator as CalcIcon, RefreshCw, Play } from 'lucide-react';
 import { NumberFormatter, UnitConverter } from '../utils/unitConverter';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Calculadora Técnica com fórmulas personalizadas
@@ -25,16 +26,54 @@ export default function TechnicalCalculator({ data }) {
  * Seção de Templates de Cálculo
  */
 function TemplatesSection({ data }) {
+  const { t } = useLanguage();
   const [selectedTemplate, setSelectedTemplate] = useState('economico');
   const [variables, setVariables] = useState({});
   const [results, setResults] = useState({});
   const [showResults, setShowResults] = useState(false);
 
+  // Função helper para traduzir nomes de fórmulas
+  const translateFormulaName = (name) => {
+    const mapping = {
+      'Q_Recuperado (Sm³/d)': t.recoveredGas,
+      'Receita Anual Gás (k USD)': t.annualGasRevenue,
+      'OPEX Anual (k USD)': t.annualOpex,
+      'E_Reduzida (tCO₂/ano)': t.reducedEmissions,
+      'Economia Multas (k USD/ano)': t.penaltySavings,
+      'Payback Simples (anos)': t.simplePayback,
+      'Gás Total Flare (Sm³/d)': t.totalFlareGas,
+      'Gás LP Recuperado (Sm³/d)': t.lpRecoveredGas,
+      'Gás HP Recuperado (Sm³/d)': t.hpRecoveredGas,
+      'Gás Total Recuperado (Sm³/d)': t.totalRecoveredGas,
+      'Emissões Flare Atual (tCO₂/ano)': t.currentFlareEmissions,
+      'Taxa Recuperação Global (%)': t.globalRecoveryRate,
+      'Emissões LP Atual (tCO₂/ano)': t.currentLpEmissions,
+      'Emissões HP Atual (tCO₂/ano)': t.currentHpEmissions,
+      'Emissões LP Proposto (tCO₂/ano)': t.proposedLpEmissions,
+      'Emissões HP Proposto (tCO₂/ano)': t.proposedHpEmissions,
+      'Redução Total (tCO₂/ano)': t.totalReduction,
+      'Equiv. Árvores (unidades)': t.equivalentTrees,
+      'Equiv. Carros/ano (unidades)': t.equivalentCarsPerYear,
+      'Vazão Hull Capturada (Sm³/d)': t.capturedHullFlow,
+      'Vazão Hull Residual (Sm³/d)': t.residualHullFlow,
+      'Razão Compressão HP': t.hpCompressionRatio,
+      'Vazão Mássica Hull (kg/d)': t.hullMassFlow,
+      'Vazão Volumétrica Hull (m³/h)': t.hullVolumetricFlow,
+      'Densidade Relativa': t.relativeDensity,
+      'Emissões Anuais (tCO₂)': t.annualEmissions,
+      'Emissões Diárias (tCO₂/d)': t.dailyEmissions,
+      'Emissões Mensais (tCO₂/mês)': t.monthlyEmissions,
+      'Potência Teórica (kW)': t.theoreticalPower,
+      'Potência Real (HP)': t.realPower
+    };
+    return mapping[name] || name;
+  };
+
   // Definir templates
   const templates = {
     'economico': {
-      nome: '💰 Análise Econômica Simulador',
-      descricao: 'Cálculos econômicos baseados nos parâmetros do simulador',
+      nome: t.economicAnalysis,
+      descricao: t.economicAnalysisDesc,
       variaveis: {
         'Q_LP': { valor: data.monitoring?.totals?.totalLP || 27900, label: 'Q_LP' },
         'Q_HP': { valor: data.monitoring?.totals?.totalHP || 40000, label: 'Q_HP' },
@@ -57,8 +96,8 @@ function TemplatesSection({ data }) {
       }
     },
     'dados': {
-      nome: '📊 Dados do Simulador Atual',
-      descricao: 'Parâmetros operacionais e resultados da simulação atual',
+      nome: t.simulatorData,
+      descricao: t.simulatorDataDesc,
       variaveis: {
         'Q_LP_Flare': { valor: data.monitoring?.totals?.totalLP || 27900, label: 'Q_LP_Flare' },
         'Q_HP_Flare': { valor: data.monitoring?.totals?.totalHP || 40000, label: 'Q_HP_Flare' },
@@ -76,8 +115,8 @@ function TemplatesSection({ data }) {
       }
     },
     'ambiental': {
-      nome: '🌍 Impacto Ambiental Simulador',
-      descricao: 'Análise de emissões e impacto ambiental do projeto',
+      nome: t.environmentalImpact,
+      descricao: t.environmentalImpactDesc,
       variaveis: {
         'Q_LP': { valor: data.monitoring?.totals?.totalLP || 27900, label: 'Q_LP' },
         'Q_HP': { valor: data.monitoring?.totals?.totalHP || 40000, label: 'Q_HP' },
@@ -99,8 +138,8 @@ function TemplatesSection({ data }) {
       }
     },
     'tecnico': {
-      nome: '⚙️ Análise Técnica Simulador',
-      descricao: 'Parâmetros técnicos de compressores e vazões',
+      nome: t.technicalAnalysisCalc,
+      descricao: t.technicalAnalysisCalcDesc,
       variaveis: {
         'Q_Hull': { valor: 14830, label: 'Q_Hull' },
         'Eta_Hull': { valor: 95, label: 'Eta_Hull' },
@@ -118,8 +157,8 @@ function TemplatesSection({ data }) {
       }
     },
     'emissoes': {
-      nome: '💨 Emissões de CO₂',
-      descricao: 'Cálculo de emissões de gases de efeito estufa',
+      nome: t.co2Emissions,
+      descricao: t.co2EmissionsDesc,
       variaveis: {
         'Q': { valor: data.monitoring?.totals?.totalFlaring || 67900, label: 'Q' },
         'FE': { valor: 0.00275, label: 'FE' },
@@ -132,8 +171,8 @@ function TemplatesSection({ data }) {
       }
     },
     'compressor': {
-      nome: '⚡ Potência de Compressor',
-      descricao: 'Cálculo de potência requerida para compressão isotérmica',
+      nome: t.compressorPower,
+      descricao: t.compressorPowerDesc,
       variaveis: {
         'Q': { valor: data.compressors?.hp?.vazao || 250000, label: 'Q' },
         'P1': { valor: 1.0, label: 'P1' },
@@ -200,7 +239,7 @@ function TemplatesSection({ data }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <CalcIcon size={18} className="text-blue-600" />
-          <h3 className="text-base font-semibold text-gray-900">Templates de Cálculo</h3>
+          <h3 className="text-base font-semibold text-gray-900">{t.calculationTemplates}</h3>
         </div>
 
         {/* Seletor de Template - Inline */}
@@ -224,7 +263,7 @@ function TemplatesSection({ data }) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
         {/* Variáveis de Entrada - Compacto */}
         <div className="lg:col-span-1">
-          <h4 className="text-xs font-semibold text-gray-700 mb-2">Variáveis ({Object.keys(currentTemplate.variaveis).length})</h4>
+          <h4 className="text-xs font-semibold text-gray-700 mb-2">{t.variables} ({Object.keys(currentTemplate.variaveis).length})</h4>
           <div className="space-y-1.5 max-h-80 overflow-y-auto">
             {Object.entries(currentTemplate.variaveis).map(([varName, varInfo]) => (
               <div key={varName} className="bg-gray-50 border border-gray-200 rounded p-2">
@@ -245,11 +284,11 @@ function TemplatesSection({ data }) {
 
         {/* Fórmulas - Compacto */}
         <div className="lg:col-span-2">
-          <h4 className="text-xs font-semibold text-gray-700 mb-2">Fórmulas ({Object.keys(currentTemplate.formulas).length})</h4>
+          <h4 className="text-xs font-semibold text-gray-700 mb-2">{t.formulas} ({Object.keys(currentTemplate.formulas).length})</h4>
           <div className="space-y-1 max-h-80 overflow-y-auto">
             {Object.entries(currentTemplate.formulas).map(([resultName, formula]) => (
               <div key={resultName} className="bg-gray-50 border border-gray-200 rounded p-2">
-                <div className="text-xs font-medium text-gray-700">{resultName}</div>
+                <div className="text-xs font-medium text-gray-700">{translateFormulaName(resultName)}</div>
                 <div className="text-xs font-mono text-blue-600 mt-0.5">= {formula}</div>
               </div>
             ))}
@@ -263,17 +302,17 @@ function TemplatesSection({ data }) {
         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded text-sm flex items-center justify-center gap-2 transition-colors"
       >
         <Play size={16} />
-        Calcular Resultados
+        {t.calculateResults}
       </button>
 
       {/* Resultados - Compactos */}
       {showResults && (
         <div className="mt-3 pt-3 border-t border-gray-200">
-          <h4 className="text-xs font-semibold text-gray-700 mb-2">Resultados ({Object.keys(results).length})</h4>
+          <h4 className="text-xs font-semibold text-gray-700 mb-2">{t.results} ({Object.keys(results).length})</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
             {Object.entries(results).map(([resultName, value]) => (
               <div key={resultName} className="bg-green-50 border border-green-200 rounded p-2">
-                <div className="text-xs font-medium text-gray-600 mb-0.5">{resultName}</div>
+                <div className="text-xs font-medium text-gray-600 mb-0.5">{translateFormulaName(resultName)}</div>
                 <div className="text-base font-bold text-green-700">
                   {value !== null ? NumberFormatter.format(value, 2) : '❌ Erro'}
                 </div>
@@ -290,6 +329,7 @@ function TemplatesSection({ data }) {
  * Seção de Conversores de Unidades Interativos
  */
 function UnitConvertersSection() {
+  const { t } = useLanguage();
   const [activeConverter, setActiveConverter] = useState('vazao');
 
   // Estados para cada conversor
@@ -312,19 +352,19 @@ function UnitConvertersSection() {
   const [volumeUnit, setVolumeUnit] = useState('m³');
 
   const converters = [
-    { id: 'vazao', label: 'Vazão Volumétrica', icon: '💧' },
-    { id: 'pressao', label: 'Pressão', icon: '🔧' },
-    { id: 'temperatura', label: 'Temperatura', icon: '🌡️' },
-    { id: 'massa', label: 'Vazão Mássica', icon: '⚖️' },
-    { id: 'energia', label: 'Energia/Potência', icon: '⚡' },
-    { id: 'volume', label: 'Volume', icon: '📦' }
+    { id: 'vazao', label: t.volumetricFlow, icon: '💧' },
+    { id: 'pressao', label: t.pressure, icon: '🔧' },
+    { id: 'temperatura', label: t.temperature, icon: '🌡️' },
+    { id: 'massa', label: t.massFlow, icon: '⚖️' },
+    { id: 'energia', label: t.energyPower, icon: '⚡' },
+    { id: 'volume', label: t.volume, icon: '📦' }
   ];
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
         <RefreshCw size={18} className="text-green-600" />
-        <h3 className="text-base font-semibold text-gray-900">Conversor de Unidades</h3>
+        <h3 className="text-base font-semibold text-gray-900">{t.unitConverter}</h3>
       </div>
 
       {/* Tabs de Conversores - Compactos */}
@@ -411,6 +451,7 @@ function UnitConvertersSection() {
  * Conversor de Vazão Volumétrica
  */
 function VazaoConverter({ value, setValue, unit, setUnit }) {
+  const { t } = useLanguage();
   const units = UnitConverter.getUnits('volume_flow');
 
   const conversions = units.map(u => ({
@@ -423,7 +464,7 @@ function VazaoConverter({ value, setValue, unit, setUnit }) {
       <div>
         <div className="space-y-2">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Valor</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.value}</label>
             <input
               type="number"
               value={value}
@@ -432,7 +473,7 @@ function VazaoConverter({ value, setValue, unit, setUnit }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Unidade</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.unit}</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
@@ -466,6 +507,7 @@ function VazaoConverter({ value, setValue, unit, setUnit }) {
  * Conversor de Pressão
  */
 function PressaoConverter({ value, setValue, unit, setUnit }) {
+  const { t } = useLanguage();
   const units = UnitConverter.getUnits('pressure');
 
   const conversions = units.map(u => ({
@@ -478,7 +520,7 @@ function PressaoConverter({ value, setValue, unit, setUnit }) {
       <div>
         <div className="space-y-2">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Valor</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.value}</label>
             <input
               type="number"
               value={value}
@@ -487,7 +529,7 @@ function PressaoConverter({ value, setValue, unit, setUnit }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Unidade</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.unit}</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
@@ -521,6 +563,7 @@ function PressaoConverter({ value, setValue, unit, setUnit }) {
  * Conversor de Temperatura
  */
 function TemperaturaConverter({ value, setValue, unit, setUnit }) {
+  const { t } = useLanguage();
   const units = UnitConverter.getUnits('temperature');
 
   const conversions = units.map(u => ({
@@ -533,7 +576,7 @@ function TemperaturaConverter({ value, setValue, unit, setUnit }) {
       <div>
         <div className="space-y-2">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Valor</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.value}</label>
             <input
               type="number"
               value={value}
@@ -542,7 +585,7 @@ function TemperaturaConverter({ value, setValue, unit, setUnit }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Unidade</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.unit}</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
@@ -576,6 +619,7 @@ function TemperaturaConverter({ value, setValue, unit, setUnit }) {
  * Conversor de Vazão Mássica
  */
 function MassaConverter({ value, setValue, unit, setUnit }) {
+  const { t } = useLanguage();
   const units = UnitConverter.getUnits('mass_flow');
 
   const conversions = units.map(u => ({
@@ -588,7 +632,7 @@ function MassaConverter({ value, setValue, unit, setUnit }) {
       <div>
         <div className="space-y-2">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Valor</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.value}</label>
             <input
               type="number"
               value={value}
@@ -597,7 +641,7 @@ function MassaConverter({ value, setValue, unit, setUnit }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Unidade</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.unit}</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
@@ -631,6 +675,7 @@ function MassaConverter({ value, setValue, unit, setUnit }) {
  * Conversor de Energia/Potência
  */
 function EnergiaConverter({ value, setValue, unit, setUnit }) {
+  const { t } = useLanguage();
   const units = UnitConverter.getUnits('energy');
 
   const conversions = units.map(u => ({
@@ -643,7 +688,7 @@ function EnergiaConverter({ value, setValue, unit, setUnit }) {
       <div>
         <div className="space-y-2">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Valor</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.value}</label>
             <input
               type="number"
               value={value}
@@ -652,7 +697,7 @@ function EnergiaConverter({ value, setValue, unit, setUnit }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Unidade</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.unit}</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
@@ -686,6 +731,7 @@ function EnergiaConverter({ value, setValue, unit, setUnit }) {
  * Conversor de Volume
  */
 function VolumeConverter({ value, setValue, unit, setUnit }) {
+  const { t } = useLanguage();
   const units = UnitConverter.getUnits('volume');
 
   const conversions = units.map(u => ({
@@ -698,7 +744,7 @@ function VolumeConverter({ value, setValue, unit, setUnit }) {
       <div>
         <div className="space-y-2">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Valor</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.value}</label>
             <input
               type="number"
               value={value}
@@ -707,7 +753,7 @@ function VolumeConverter({ value, setValue, unit, setUnit }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Unidade</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t.unit}</label>
             <select
               value={unit}
               onChange={(e) => setUnit(e.target.value)}

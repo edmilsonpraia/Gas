@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { CheckCircle, TrendingDown, Leaf, BarChart3 } from 'lucide-react';
 import { NumberFormatter } from '../utils/unitConverter';
 import { EmissionCalculator } from '../utils/calculations';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Análise Técnica - Sistema de Recuperação de Gás
  */
 export default function TechnicalAnalysis({ data }) {
+  const { t } = useLanguage();
   const [showMonteCarlo, setShowMonteCarlo] = useState(false);
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
@@ -66,7 +68,7 @@ export default function TechnicalAnalysis({ data }) {
 
   const cenariosProbabilisticos = {
     otimista: {
-      nome: 'Otimista',
+      nome: t.optimistic,
       taxaHull: 98,
       taxaLP: 95,
       taxaHP: 95,
@@ -75,7 +77,7 @@ export default function TechnicalAnalysis({ data }) {
       ...calcularCenarioMonteCarlo(98, 95, 95)
     },
     realista: {
-      nome: 'Realista (Base)',
+      nome: t.realistic,
       taxaHull: 95,
       taxaLP: 91,
       taxaHP: 91,
@@ -84,7 +86,7 @@ export default function TechnicalAnalysis({ data }) {
       ...calcularCenarioMonteCarlo(95, 91, 91)
     },
     pessimista: {
-      nome: 'Pessimista',
+      nome: t.pessimistic,
       taxaHull: 90,
       taxaLP: 85,
       taxaHP: 85,
@@ -100,37 +102,37 @@ export default function TechnicalAnalysis({ data }) {
       <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
           <CheckCircle size={16} className="text-green-600" />
-          <h2 className="text-sm font-bold text-green-900">Método Proposto - Sistema de Recuperação</h2>
+          <h2 className="text-sm font-bold text-green-900">{t.proposedMethod}</h2>
         </div>
         <p className="text-xs text-gray-700">
-          Sistema integrado de captura, compressão e recuperação de gás
+          {t.integratedSystem}
         </p>
       </div>
 
       {/* Descrição do Sistema */}
       <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">Descrição do Sistema Proposto</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.systemDescription}</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-gray-800 mb-2">Inovações Técnicas:</h4>
+            <h4 className="text-xs font-semibold text-gray-800 mb-2">{t.technicalInnovations}</h4>
             <ul className="space-y-1 text-xs text-gray-700">
-              <li>• Sistema de captura Hull Vent ({taxaRecuperacaoHull}%)</li>
-              <li>• Compressão de gás recuperado</li>
-              <li>• Integração com rede de gás existente</li>
-              <li>• Redução LP Flare em {taxaReducaoLP}%</li>
-              <li>• Redução HP Flare em {taxaReducaoHP}%</li>
+              <li>• {t.hullVentCapture} ({taxaRecuperacaoHull}%)</li>
+              <li>• {t.gasCompression}</li>
+              <li>• {t.networkIntegration}</li>
+              <li>• {t.lpFlareReduction} {taxaReducaoLP}%</li>
+              <li>• {t.hpFlareReduction} {taxaReducaoHP}%</li>
             </ul>
           </div>
 
           <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-gray-800 mb-2">Novos Equipamentos:</h4>
+            <h4 className="text-xs font-semibold text-gray-800 mb-2">{t.newEquipment}</h4>
             <ul className="space-y-1 text-xs text-gray-700">
-              <li>• Sistema de captura Hull Vent</li>
-              <li>• Compressor de recuperação</li>
-              <li>• Tubulação de interligação</li>
-              <li>• Instrumentação e controle</li>
-              <li>• Sistema de tratamento de gás</li>
+              <li>• {t.hullVentCapture}</li>
+              <li>• {t.recoveryCompressor}</li>
+              <li>• {t.interconnectionPiping}</li>
+              <li>• {t.instrumentationControl}</li>
+              <li>• {t.gasTreatmentSystem}</li>
             </ul>
           </div>
         </div>
@@ -138,11 +140,11 @@ export default function TechnicalAnalysis({ data }) {
 
       {/* Performance do Sistema */}
       <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">Performance do Sistema</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.systemPerformance}</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-600 mb-1">Gás Recuperado</p>
+            <p className="text-xs text-gray-600 mb-1">{t.gasRecovered}</p>
             <h3 className="text-lg font-bold text-green-700">
               {NumberFormatter.format(gasTotalRecuperado / 1000, 1)}
             </h3>
@@ -153,7 +155,7 @@ export default function TechnicalAnalysis({ data }) {
           </div>
 
           <div className="bg-white border border-blue-200 rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-600 mb-1">Redução LP Flare</p>
+            <p className="text-xs text-gray-600 mb-1">{t.lpFlareReduction}</p>
             <h3 className="text-lg font-bold text-blue-700">
               {NumberFormatter.format(gasLPRecuperado, 0)}
             </h3>
@@ -164,7 +166,7 @@ export default function TechnicalAnalysis({ data }) {
           </div>
 
           <div className="bg-white border border-purple-200 rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-600 mb-1">Redução HP Flare</p>
+            <p className="text-xs text-gray-600 mb-1">{t.hpFlareReduction}</p>
             <h3 className="text-lg font-bold text-purple-700">
               {NumberFormatter.format(gasHPRecuperado, 0)}
             </h3>
@@ -175,13 +177,13 @@ export default function TechnicalAnalysis({ data }) {
           </div>
 
           <div className="bg-white border border-orange-200 rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-600 mb-1">Taxa Global</p>
+            <p className="text-xs text-gray-600 mb-1">{t.globalRate}</p>
             <h3 className="text-lg font-bold text-orange-700">
               {NumberFormatter.format(percentualRecuperado, 1)}
             </h3>
             <p className="text-xs text-orange-600 font-semibold">%</p>
             <p className="text-xs text-gray-500 mt-1">
-              % de gás recuperado
+              {t.percentRecovered}
             </p>
           </div>
         </div>
@@ -189,31 +191,31 @@ export default function TechnicalAnalysis({ data }) {
 
       {/* Balanço de Massa */}
       <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">Balanço de Massa</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.massBalance}</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm">
             <h4 className="text-xs font-semibold text-green-900 mb-2 flex items-center gap-1">
               <CheckCircle size={14} />
-              Gás Recuperado
+              {t.gasRecoveredLabel}
             </h4>
             <div className="space-y-1 text-xs text-gray-700">
               <div className="flex justify-between">
-                <span>LP Flare + Hull Vent ({taxaReducaoLP}%):</span>
+                <span>{t.lpFlareHullVent} ({taxaReducaoLP}%):</span>
                 <span className="font-semibold">{NumberFormatter.format(gasHPRecuperado + gasHullCapturado, 0)} Sm³/d</span>
               </div>
               <div className="flex justify-between">
-                <span>Recuperação HP Flare ({taxaReducaoHP}%):</span>
+                <span>{t.hpFlareRecovery} ({taxaReducaoHP}%):</span>
                 <span className="font-semibold">{NumberFormatter.format(gasLPRecuperado, 0)} Sm³/d</span>
               </div>
               <div className="border-t border-green-300 pt-1 mt-1">
                 <div className="flex justify-between font-bold text-green-800">
-                  <span>Total Recuperado:</span>
+                  <span>{t.totalRecovered}:</span>
                   <span className="text-sm">{NumberFormatter.format(gasTotalRecuperado, 0)} Sm³/d</span>
                 </div>
               </div>
               <div className="text-xs text-green-700 mt-2">
-                Destinação: Rede de gás / Exportação / Injeção
+                {t.destination}
               </div>
             </div>
           </div>
@@ -221,18 +223,18 @@ export default function TechnicalAnalysis({ data }) {
           <div className="bg-white border border-orange-200 rounded-lg p-3 shadow-sm">
             <h4 className="text-xs font-semibold text-orange-900 mb-2 flex items-center gap-1">
               <TrendingDown size={14} />
-              Emissões Residuais
+              {t.residualEmissions}
             </h4>
             <div className="space-y-1 text-xs text-gray-700">
               <div className="flex justify-between">
-                <span>LP Flare + Hull Vent (reduzido):</span>
+                <span>{t.lpFlareHullVentReduced}:</span>
                 <span className="font-semibold">{NumberFormatter.format(vazaoHPResidual + vazaoHullResidual, 0)} Sm³/d</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-xs text-red-600">(-{taxaReducaoLP}%)</span>
               </div>
               <div className="flex justify-between">
-                <span>HP Flare (reduzido):</span>
+                <span>{t.hpFlareReduced}:</span>
                 <span className="font-semibold">{NumberFormatter.format(vazaoLPResidual, 0)} Sm³/d</span>
               </div>
               <div className="flex justify-between">
@@ -240,7 +242,7 @@ export default function TechnicalAnalysis({ data }) {
               </div>
               <div className="border-t border-orange-300 pt-1 mt-1">
                 <div className="flex justify-between font-bold text-orange-800">
-                  <span>Total Emitido:</span>
+                  <span>{t.totalEmitted}:</span>
                   <span className="text-sm">{NumberFormatter.format(totalEmitido, 0)} Sm³/d</span>
                 </div>
               </div>
@@ -251,20 +253,20 @@ export default function TechnicalAnalysis({ data }) {
 
       {/* Emissões Reduzidas */}
       <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">Emissões de GEE (Reduzidas)</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.reducedGhgEmissions}</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {/* Tabela Comparativa */}
           <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-gray-800 mb-2">Comparação de Emissões</h4>
+            <h4 className="text-xs font-semibold text-gray-800 mb-2">{t.emissionsComparison}</h4>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-2 py-1 text-left font-semibold text-gray-700">Fonte</th>
-                    <th className="px-2 py-1 text-right font-semibold text-gray-700">Antes</th>
-                    <th className="px-2 py-1 text-right font-semibold text-gray-700">Depois</th>
-                    <th className="px-2 py-1 text-right font-semibold text-gray-700">Redução</th>
+                    <th className="px-2 py-1 text-left font-semibold text-gray-700">{t.source}</th>
+                    <th className="px-2 py-1 text-right font-semibold text-gray-700">{t.before}</th>
+                    <th className="px-2 py-1 text-right font-semibold text-gray-700">{t.after}</th>
+                    <th className="px-2 py-1 text-right font-semibold text-gray-700">{t.reduction}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -297,31 +299,31 @@ export default function TechnicalAnalysis({ data }) {
 
           {/* Card de Emissões Reduzidas */}
           <div className="bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-white text-center mb-2">Emissões Reduzidas</h4>
+            <h4 className="text-xs font-semibold text-white text-center mb-2">{t.reducedEmissions}</h4>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 mb-2">
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-green-100">LP Flare + Hull Vent:</span>
+                  <span className="text-green-100">{t.lpFlareHullVent}:</span>
                   <span className="font-semibold">{NumberFormatter.format(cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull, 0)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-green-100">HP Flare:</span>
+                  <span className="text-green-100">{t.hpFlare}:</span>
                   <span className="font-semibold">{NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0)}</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-lg p-3 text-center">
-              <p className="text-xs text-green-800 font-semibold mb-1">TOTAL ANUAL (NOVO)</p>
+              <p className="text-xs text-green-800 font-semibold mb-1">{t.totalAnnualNew}</p>
               <h2 className="text-xl font-bold text-green-700 mb-1">
                 {NumberFormatter.format(cenarioProposto.emissoes_total, 0)}
               </h2>
-              <p className="text-xs text-green-800 font-semibold">toneladas CO₂eq</p>
+              <p className="text-xs text-green-800 font-semibold">{t.tonsCO2eq}</p>
             </div>
 
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 mt-2 text-center">
-              <p className="text-xs font-semibold mb-1">REDUÇÃO: {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano</p>
+              <p className="text-xs font-semibold mb-1">{t.reductionLabel}: {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano</p>
               <p className="text-lg font-bold">↓ {NumberFormatter.format(reducaoPercentual, 1)}%</p>
             </div>
           </div>
@@ -330,48 +332,48 @@ export default function TechnicalAnalysis({ data }) {
 
       {/* Benefícios e Vantagens */}
       <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">Benefícios e Vantagens</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.benefitsAdvantages}</h3>
 
         <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm">
           <div className="flex items-start gap-2 mb-2">
             <Leaf size={16} className="text-green-600 flex-shrink-0" />
             <div>
-              <h4 className="text-xs font-semibold text-green-900 mb-2">Principais Benefícios do Sistema</h4>
+              <h4 className="text-xs font-semibold text-green-900 mb-2">{t.mainBenefits}</h4>
               <ul className="space-y-1 text-xs text-gray-700">
                 <li className="flex items-start gap-1">
                   <span className="text-green-600">•</span>
                   <div>
-                    <strong>Aproveitamento Energético:</strong> {NumberFormatter.format(cenarioProposto.vazao_anual_recuperada / 1e6, 2)} MSm³/ano de gás recuperado
+                    <strong>{t.energyUtilization}:</strong> {NumberFormatter.format(cenarioProposto.vazao_anual_recuperada / 1e6, 2)} MSm³/ano {t.gasRecoveredAmount}
                   </div>
                 </li>
                 <li className="flex items-start gap-1">
                   <span className="text-green-600">•</span>
                   <div>
-                    <strong>Redução de Emissões:</strong> {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano ({NumberFormatter.format(reducaoPercentual, 1)}%)
+                    <strong>{t.emissionReduction}:</strong> {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano ({NumberFormatter.format(reducaoPercentual, 1)}%)
                   </div>
                 </li>
                 <li className="flex items-start gap-1">
                   <span className="text-green-600">•</span>
                   <div>
-                    <strong>Geração de Receita:</strong> Gás recuperado pode ser comercializado ou usado
+                    <strong>{t.revenueGeneration}:</strong> {t.gasCanBeTraded}
                   </div>
                 </li>
                 <li className="flex items-start gap-1">
                   <span className="text-green-600">•</span>
                   <div>
-                    <strong>Conformidade Ambiental:</strong> Alinhado com regulações de zero flare
+                    <strong>{t.environmentalCompliance}:</strong> {t.alignedZeroFlare}
                   </div>
                 </li>
                 <li className="flex items-start gap-1">
                   <span className="text-green-600">•</span>
                   <div>
-                    <strong>Sustentabilidade:</strong> Contribui para metas ESG da empresa
+                    <strong>{t.sustainability}:</strong> {t.contributesESG}
                   </div>
                 </li>
                 <li className="flex items-start gap-1">
                   <span className="text-green-600">•</span>
                   <div>
-                    <strong>Eficiência Operacional:</strong> Otimização do aproveitamento de recursos
+                    <strong>{t.operationalEfficiency}:</strong> {t.resourceOptimization}
                   </div>
                 </li>
               </ul>
@@ -383,13 +385,13 @@ export default function TechnicalAnalysis({ data }) {
       {/* Simulação Monte Carlo - Análise Probabilística */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-bold text-gray-900">Análise Monte Carlo - Cenários Técnicos</h3>
+          <h3 className="text-sm font-bold text-gray-900">{t.monteCarloAnalysis}</h3>
           <button
             onClick={() => setShowMonteCarlo(!showMonteCarlo)}
             className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
           >
             <BarChart3 size={14} />
-            {showMonteCarlo ? 'Ocultar' : 'Mostrar'} Simulação
+            {showMonteCarlo ? t.hideSimulation : t.showSimulation}
           </button>
         </div>
 
@@ -397,8 +399,7 @@ export default function TechnicalAnalysis({ data }) {
           <div className="space-y-3 animate-fade-in">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-xs text-gray-700 mb-2">
-                <strong>Simulação probabilística</strong> considerando variações nas taxas de recuperação do sistema.
-                Os três cenários representam diferentes condições operacionais e eficiências do equipamento.
+                <strong>{t.probabilisticSimulation}</strong> {t.consideringRecoveryVariations}
               </p>
             </div>
 
@@ -414,18 +415,18 @@ export default function TechnicalAnalysis({ data }) {
 
                 <div className="space-y-2 text-xs">
                   <div className="bg-orange-50 p-2 rounded">
-                    <p className="text-gray-600 mb-1">Taxas de Recuperação:</p>
+                    <p className="text-gray-600 mb-1">{t.recoveryRates}:</p>
                     <div className="space-y-0.5 text-gray-700">
                       <div className="flex justify-between">
-                        <span>Hull Vent:</span>
+                        <span>{t.hullVent}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.pessimista.taxaHull}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>LP Flare:</span>
+                        <span>{t.lpFlare}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.pessimista.taxaLP}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>HP Flare:</span>
+                        <span>{t.hpFlare}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.pessimista.taxaHP}%</span>
                       </div>
                     </div>
@@ -433,19 +434,19 @@ export default function TechnicalAnalysis({ data }) {
 
                   <div className="border-t border-orange-200 pt-2">
                     <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">Gás Recuperado:</span>
+                      <span className="text-gray-600">{t.gasRecoveredLabel}:</span>
                       <span className="font-bold text-orange-700">
                         {NumberFormatter.format(cenariosProbabilisticos.pessimista.gasTotal / 1000, 1)} KSm³/d
                       </span>
                     </div>
                     <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">Taxa Global:</span>
+                      <span className="text-gray-600">{t.globalRateLabel}:</span>
                       <span className="font-bold text-orange-700">
                         {NumberFormatter.format(cenariosProbabilisticos.pessimista.taxaRecuperacao, 1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Redução Emissões:</span>
+                      <span className="text-gray-600">{t.emissionReductionShort}:</span>
                       <span className="font-bold text-green-700">
                         {NumberFormatter.format(cenariosProbabilisticos.pessimista.reducaoEmissoes, 0)} t/ano
                       </span>
@@ -465,18 +466,18 @@ export default function TechnicalAnalysis({ data }) {
 
                 <div className="space-y-2 text-xs">
                   <div className="bg-blue-50 p-2 rounded">
-                    <p className="text-gray-600 mb-1">Taxas de Recuperação:</p>
+                    <p className="text-gray-600 mb-1">{t.recoveryRates}:</p>
                     <div className="space-y-0.5 text-gray-700">
                       <div className="flex justify-between">
-                        <span>Hull Vent:</span>
+                        <span>{t.hullVent}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.realista.taxaHull}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>LP Flare:</span>
+                        <span>{t.lpFlare}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.realista.taxaLP}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>HP Flare:</span>
+                        <span>{t.hpFlare}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.realista.taxaHP}%</span>
                       </div>
                     </div>
@@ -484,19 +485,19 @@ export default function TechnicalAnalysis({ data }) {
 
                   <div className="border-t border-blue-200 pt-2">
                     <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">Gás Recuperado:</span>
+                      <span className="text-gray-600">{t.gasRecoveredLabel}:</span>
                       <span className="font-bold text-blue-700">
                         {NumberFormatter.format(cenariosProbabilisticos.realista.gasTotal / 1000, 1)} KSm³/d
                       </span>
                     </div>
                     <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">Taxa Global:</span>
+                      <span className="text-gray-600">{t.globalRateLabel}:</span>
                       <span className="font-bold text-blue-700">
                         {NumberFormatter.format(cenariosProbabilisticos.realista.taxaRecuperacao, 1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Redução Emissões:</span>
+                      <span className="text-gray-600">{t.emissionReductionShort}:</span>
                       <span className="font-bold text-green-700">
                         {NumberFormatter.format(cenariosProbabilisticos.realista.reducaoEmissoes, 0)} t/ano
                       </span>
@@ -516,18 +517,18 @@ export default function TechnicalAnalysis({ data }) {
 
                 <div className="space-y-2 text-xs">
                   <div className="bg-green-50 p-2 rounded">
-                    <p className="text-gray-600 mb-1">Taxas de Recuperação:</p>
+                    <p className="text-gray-600 mb-1">{t.recoveryRates}:</p>
                     <div className="space-y-0.5 text-gray-700">
                       <div className="flex justify-between">
-                        <span>Hull Vent:</span>
+                        <span>{t.hullVent}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.otimista.taxaHull}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>LP Flare:</span>
+                        <span>{t.lpFlare}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.otimista.taxaLP}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>HP Flare:</span>
+                        <span>{t.hpFlare}:</span>
                         <span className="font-semibold">{cenariosProbabilisticos.otimista.taxaHP}%</span>
                       </div>
                     </div>
@@ -535,19 +536,19 @@ export default function TechnicalAnalysis({ data }) {
 
                   <div className="border-t border-green-200 pt-2">
                     <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">Gás Recuperado:</span>
+                      <span className="text-gray-600">{t.gasRecoveredLabel}:</span>
                       <span className="font-bold text-green-700">
                         {NumberFormatter.format(cenariosProbabilisticos.otimista.gasTotal / 1000, 1)} KSm³/d
                       </span>
                     </div>
                     <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">Taxa Global:</span>
+                      <span className="text-gray-600">{t.globalRateLabel}:</span>
                       <span className="font-bold text-green-700">
                         {NumberFormatter.format(cenariosProbabilisticos.otimista.taxaRecuperacao, 1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Redução Emissões:</span>
+                      <span className="text-gray-600">{t.emissionReductionShort}:</span>
                       <span className="font-bold text-green-700">
                         {NumberFormatter.format(cenariosProbabilisticos.otimista.reducaoEmissoes, 0)} t/ano
                       </span>
@@ -559,25 +560,25 @@ export default function TechnicalAnalysis({ data }) {
 
             {/* Resumo Estatístico */}
             <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-              <h4 className="text-xs font-semibold text-gray-800 mb-2">Resumo Estatístico</h4>
+              <h4 className="text-xs font-semibold text-gray-800 mb-2">{t.statisticalSummary}</h4>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                 <div className="bg-gray-50 p-2 rounded">
-                  <p className="text-gray-600 mb-1">Gás Recuperado (KSm³/d):</p>
+                  <p className="text-gray-600 mb-1">{t.gasRecoveredKSm3d}:</p>
                   <div className="space-y-0.5">
                     <div className="flex justify-between">
-                      <span>Mínimo:</span>
+                      <span>{t.minimum}:</span>
                       <span className="font-bold text-orange-700">
                         {NumberFormatter.format(cenariosProbabilisticos.pessimista.gasTotal / 1000, 1)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Esperado:</span>
+                      <span>{t.expected}:</span>
                       <span className="font-bold text-blue-700">
                         {NumberFormatter.format(cenariosProbabilisticos.realista.gasTotal / 1000, 1)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Máximo:</span>
+                      <span>{t.maximum}:</span>
                       <span className="font-bold text-green-700">
                         {NumberFormatter.format(cenariosProbabilisticos.otimista.gasTotal / 1000, 1)}
                       </span>
@@ -586,22 +587,22 @@ export default function TechnicalAnalysis({ data }) {
                 </div>
 
                 <div className="bg-gray-50 p-2 rounded">
-                  <p className="text-gray-600 mb-1">Taxa de Recuperação (%):</p>
+                  <p className="text-gray-600 mb-1">{t.recoveryRatePercent}:</p>
                   <div className="space-y-0.5">
                     <div className="flex justify-between">
-                      <span>Mínimo:</span>
+                      <span>{t.minimum}:</span>
                       <span className="font-bold text-orange-700">
                         {NumberFormatter.format(cenariosProbabilisticos.pessimista.taxaRecuperacao, 1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Esperado:</span>
+                      <span>{t.expected}:</span>
                       <span className="font-bold text-blue-700">
                         {NumberFormatter.format(cenariosProbabilisticos.realista.taxaRecuperacao, 1)}%
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Máximo:</span>
+                      <span>{t.maximum}:</span>
                       <span className="font-bold text-green-700">
                         {NumberFormatter.format(cenariosProbabilisticos.otimista.taxaRecuperacao, 1)}%
                       </span>
@@ -610,22 +611,22 @@ export default function TechnicalAnalysis({ data }) {
                 </div>
 
                 <div className="bg-gray-50 p-2 rounded">
-                  <p className="text-gray-600 mb-1">Redução de Emissões (t/ano):</p>
+                  <p className="text-gray-600 mb-1">{t.emissionReductionTYear}:</p>
                   <div className="space-y-0.5">
                     <div className="flex justify-between">
-                      <span>Mínimo:</span>
+                      <span>{t.minimum}:</span>
                       <span className="font-bold text-orange-700">
                         {NumberFormatter.format(cenariosProbabilisticos.pessimista.reducaoEmissoes, 0)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Esperado:</span>
+                      <span>{t.expected}:</span>
                       <span className="font-bold text-blue-700">
                         {NumberFormatter.format(cenariosProbabilisticos.realista.reducaoEmissoes, 0)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Máximo:</span>
+                      <span>{t.maximum}:</span>
                       <span className="font-bold text-green-700">
                         {NumberFormatter.format(cenariosProbabilisticos.otimista.reducaoEmissoes, 0)}
                       </span>

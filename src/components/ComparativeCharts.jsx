@@ -2,11 +2,13 @@ import React from 'react';
 import Plot from 'react-plotly.js';
 import { EmissionCalculator } from '../utils/calculations';
 import { NumberFormatter } from '../utils/unitConverter';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Gráficos Comparativos - Sistema Atual vs Proposto
  */
 export default function ComparativeCharts({ data }) {
+  const { t } = useLanguage();
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
 
@@ -34,12 +36,12 @@ export default function ComparativeCharts({ data }) {
       {/* Gráfico 1: Ganho Absoluto - Compacto */}
       <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-900 mb-2">
-          Ganho: {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano ({NumberFormatter.format(reducaoPercentual, 1)}% redução)
+          {t.gain}: {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano ({NumberFormatter.format(reducaoPercentual, 1)}% {t.reductionLabel2})
         </h3>
         <Plot
           data={[
             {
-              x: ['LP Flare + Hull Vent', 'HP Flare', 'TOTAL'],
+              x: [t.lpFlareHullVent, t.hpFlare, t.total.toUpperCase()],
               y: [reducaoLPHull, reducaoHP, reducaoEmissoes],
               type: 'bar',
               marker: {
@@ -61,7 +63,7 @@ export default function ComparativeCharts({ data }) {
                 family: 'Arial, sans-serif',
                 weight: 'bold'
               },
-              hovertemplate: '<b>%{x}</b><br>Redução: %{y:,.0f} tCO₂eq/ano<extra></extra>'
+              hovertemplate: `<b>%{x}</b><br>${t.reduction}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
             }
           ]}
           layout={{
@@ -78,7 +80,7 @@ export default function ComparativeCharts({ data }) {
               titlestandoff: 25
             },
             yaxis: {
-              title: { text: 'Redução (tCO₂eq/ano)', font: { size: 10 } },
+              title: { text: t.reductionTco2Year, font: { size: 10 } },
               tickformat: ',.0f',
               gridcolor: '#e5e7eb'
             },
@@ -101,18 +103,18 @@ export default function ComparativeCharts({ data }) {
       {/* Gráfico 2: Emissões por Fonte - Compacto */}
       <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-900 mb-2">
-          Emissões por Fonte (tCO₂eq/ano)
+          {t.emissionsBySource}
         </h3>
         <Plot
           data={[
             {
-              x: ['LP Flare + Hull Vent', 'HP Flare', 'TOTAL'],
+              x: [t.lpFlareHullVent, t.hpFlare, t.total.toUpperCase()],
               y: [
                 cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull,
                 cenarioAtual.emissoes_lp_flare,
                 cenarioAtual.emissoes_total
               ],
-              name: 'Atual',
+              name: t.currentLabel,
               type: 'bar',
               marker: {
                 color: '#ef4444',
@@ -132,16 +134,16 @@ export default function ComparativeCharts({ data }) {
                 size: 10,
                 weight: 'bold'
               },
-              hovertemplate: '<b>%{x}</b><br>Atual: %{y:,.0f} tCO₂eq/ano<extra></extra>'
+              hovertemplate: `<b>%{x}</b><br>${t.currentLabel}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
             },
             {
-              x: ['LP Flare + Hull Vent', 'HP Flare', 'TOTAL'],
+              x: [t.lpFlareHullVent, t.hpFlare, t.total.toUpperCase()],
               y: [
                 cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull,
                 cenarioProposto.emissoes_lp_flare,
                 cenarioProposto.emissoes_total
               ],
-              name: 'Proposto',
+              name: t.proposedLabel,
               type: 'bar',
               marker: {
                 color: '#10b981',
@@ -161,7 +163,7 @@ export default function ComparativeCharts({ data }) {
                 size: 10,
                 weight: 'bold'
               },
-              hovertemplate: '<b>%{x}</b><br>Proposto: %{y:,.0f} tCO₂eq/ano<extra></extra>'
+              hovertemplate: `<b>%{x}</b><br>${t.proposedLabel}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
             }
           ]}
           layout={{
@@ -177,7 +179,7 @@ export default function ComparativeCharts({ data }) {
               titlestandoff: 25
             },
             yaxis: {
-              title: { text: 'Emissões (tCO₂eq/ano)', font: { size: 10 } },
+              title: { text: t.emissionsTco2Year, font: { size: 10 } },
               tickformat: ',.0f',
               gridcolor: '#e5e7eb'
             },
@@ -211,17 +213,17 @@ export default function ComparativeCharts({ data }) {
       {/* Gráfico 3: Comparação de Vazões - Compacto */}
       <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-900 mb-2">
-          Comparação de Vazões Operacionais
+          {t.operationalFlowComparison}
         </h3>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* Cenário Atual */}
           <div>
-            <h4 className="text-xs font-semibold text-gray-700 mb-2 text-center">Atual</h4>
+            <h4 className="text-xs font-semibold text-gray-700 mb-2 text-center">{t.currentLabel}</h4>
             <Plot
               data={[
                 {
-                  x: ['LP Flare + Hull Vent', 'HP Flare'],
+                  x: [t.lpFlareHullVent, t.hpFlare],
                   y: [vazaoHPFlare + vazaoHull, vazaoLPFlare],
                   type: 'bar',
                   marker: {
@@ -241,7 +243,7 @@ export default function ComparativeCharts({ data }) {
                     size: 10,
                     weight: 'bold'
                   },
-                  hovertemplate: '<b>%{x}</b><br>Vazão: %{y:,.0f} Sm³/d<extra></extra>'
+                  hovertemplate: `<b>%{x}</b><br>${t.flowLabel}: %{y:,.0f} Sm³/d<extra></extra>`
                 }
               ]}
               layout={{
@@ -256,7 +258,7 @@ export default function ComparativeCharts({ data }) {
                   titlestandoff: 25
                 },
                 yaxis: {
-                  title: { text: 'Vazão (Sm³/d)', font: { size: 9 } },
+                  title: { text: t.flowSm3dLabel, font: { size: 9 } },
                   tickformat: ',.0f',
                   gridcolor: '#e5e7eb'
                 },
@@ -275,17 +277,17 @@ export default function ComparativeCharts({ data }) {
               style={{ width: '100%' }}
             />
             <div className="text-center mt-1 text-xs font-semibold text-gray-700">
-              Total: {NumberFormatter.format((vazaoHull + vazaoLPFlare + vazaoHPFlare) / 1000, 1)} KSm³/d
+              {t.totalLabel}: {NumberFormatter.format((vazaoHull + vazaoLPFlare + vazaoHPFlare) / 1000, 1)} KSm³/d
             </div>
           </div>
 
           {/* Cenário Proposto */}
           <div>
-            <h4 className="text-xs font-semibold text-gray-700 mb-2 text-center">Proposto</h4>
+            <h4 className="text-xs font-semibold text-gray-700 mb-2 text-center">{t.proposedLabel}</h4>
             <Plot
               data={[
                 {
-                  x: ['LP Flare + Hull Vent', 'HP Flare'],
+                  x: [t.lpFlareHullVent, t.hpFlare],
                   y: [vazaoLPHullProposto, vazaoHPProposto],
                   type: 'bar',
                   marker: {
@@ -305,7 +307,7 @@ export default function ComparativeCharts({ data }) {
                     size: 10,
                     weight: 'bold'
                   },
-                  hovertemplate: '<b>%{x}</b><br>Vazão: %{y:,.0f} Sm³/d<extra></extra>'
+                  hovertemplate: `<b>%{x}</b><br>${t.flowLabel}: %{y:,.0f} Sm³/d<extra></extra>`
                 }
               ]}
               layout={{
@@ -320,7 +322,7 @@ export default function ComparativeCharts({ data }) {
                   titlestandoff: 25
                 },
                 yaxis: {
-                  title: { text: 'Vazão (Sm³/d)', font: { size: 9 } },
+                  title: { text: t.flowSm3dLabel, font: { size: 9 } },
                   tickformat: ',.0f',
                   gridcolor: '#e5e7eb'
                 },
@@ -339,7 +341,7 @@ export default function ComparativeCharts({ data }) {
               style={{ width: '100%' }}
             />
             <div className="text-center mt-1 text-xs font-semibold text-green-700">
-              Total: {NumberFormatter.format((vazaoLPHullProposto + vazaoHPProposto) / 1000, 1)} KSm³/d
+              {t.totalLabel}: {NumberFormatter.format((vazaoLPHullProposto + vazaoHPProposto) / 1000, 1)} KSm³/d
               (↓{NumberFormatter.format((1 - (vazaoLPHullProposto + vazaoHPProposto) / (vazaoHull + vazaoLPFlare + vazaoHPFlare)) * 100, 1)}%)
             </div>
           </div>

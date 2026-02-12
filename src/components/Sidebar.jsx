@@ -3,11 +3,13 @@ import { Settings, Database, Activity, ChevronDown, ChevronRight } from 'lucide-
 import UnitInput from './UnitInput';
 import { UnitConverter } from '../utils/unitConverter';
 import { DataValidator } from '../utils/validators';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Sidebar com parâmetros de entrada
  */
 export default function Sidebar({ onDataChange }) {
+  const { t } = useLanguage();
   const [useMonitoring, setUseMonitoring] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     hpFlare: true,
@@ -63,13 +65,15 @@ export default function Sidebar({ onDataChange }) {
   // Funções de validação e sanitização
   const validateAndSetHP = (field, value) => {
     const sanitized = DataValidator.sanitizeNumber(value, 0);
-    const validated = DataValidator.validateFlaringFlow(sanitized, `HP ${field}`);
+    const label = field === 'comp1' ? 'Componente 1' : 'Componente 2';
+    const validated = DataValidator.validateFlaringFlow(sanitized, `Tocha AP - ${label}`);
     setHpValues(prev => ({ ...prev, [field]: validated.value || sanitized }));
   };
 
   const validateAndSetLP = (field, value) => {
     const sanitized = DataValidator.sanitizeNumber(value, 0);
-    const validated = DataValidator.validateFlaringFlow(sanitized, `LP ${field}`);
+    const label = field === 'comp3' ? 'Componente 3' : 'Componente 4';
+    const validated = DataValidator.validateFlaringFlow(sanitized, `Tocha BP - ${label}`);
     setLpValues(prev => ({ ...prev, [field]: validated.value || sanitized }));
   };
 
@@ -77,12 +81,17 @@ export default function Sidebar({ onDataChange }) {
     const sanitized = DataValidator.sanitizeNumber(value, 0);
     let validated;
 
+    let typeName = type;
+    if (type === 'HP') typeName = 'Compressor AP';
+    if (type === 'LP') typeName = 'Compressor BP';
+    if (type === 'Blower') typeName = 'Soprador';
+
     if (validatorType === 'flow') {
-      validated = DataValidator.validateCompressorFlow(sanitized, type);
+      validated = DataValidator.validateCompressorFlow(sanitized, typeName);
     } else if (validatorType === 'pressure') {
-      validated = DataValidator.validatePressure(sanitized, `${type} - Pressão`);
+      validated = DataValidator.validatePressure(sanitized, `${typeName} - Pressão`);
     } else if (validatorType === 'temperature') {
-      validated = DataValidator.validateTemperature(sanitized, `${type} - Temperatura`);
+      validated = DataValidator.validateTemperature(sanitized, `${typeName} - Temperatura`);
     }
 
     const finalValue = validated?.value !== null ? validated.value : sanitized;
@@ -127,10 +136,10 @@ export default function Sidebar({ onDataChange }) {
       <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-primary-600 to-primary-700">
         <div className="flex items-center gap-3 mb-2">
           <Settings className="text-white" size={24} />
-          <h2 className="text-xl font-bold text-white">Parâmetros</h2>
+          <h2 className="text-xl font-bold text-white">{t.parameters}</h2>
         </div>
         <p className="text-primary-100 text-sm">
-          Configure os valores de entrada
+          {t.configureInputValues}
         </p>
       </div>
 
@@ -139,7 +148,7 @@ export default function Sidebar({ onDataChange }) {
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center gap-2">
             <Database size={18} className="text-primary-600" />
-            <span className="text-sm font-medium">Sistema de Monitoramento</span>
+            <span className="text-sm font-medium">{t.monitoringSystem}</span>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -162,7 +171,7 @@ export default function Sidebar({ onDataChange }) {
               >
                 <div className="flex items-center gap-2">
                   <Activity size={16} className="text-primary-600" />
-                  <span className="font-medium text-sm">HP FLARE</span>
+                  <span className="font-medium text-sm">{t.hpFlare}</span>
                 </div>
                 {expandedSections.hpFlare ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </button>
@@ -170,27 +179,27 @@ export default function Sidebar({ onDataChange }) {
               {expandedSections.hpFlare && (
                 <div className="p-4 space-y-3">
                   <UnitInput
-                    label="Componente 1"
+                    label={t.component1}
                     unitType="volume_flow"
                     defaultValue={15000}
                     defaultUnit="Sm³/d"
                     maxValue={100000}
                     step={100}
-                    helpText="Primeira fonte HP"
+                    helpText={t.firstHpSource}
                     onChange={(val) => validateAndSetHP('comp1', val)}
                   />
                   <UnitInput
-                    label="Componente 2"
+                    label={t.component2}
                     unitType="volume_flow"
                     defaultValue={11000}
                     defaultUnit="Sm³/d"
                     maxValue={100000}
                     step={100}
-                    helpText="Segunda fonte HP"
+                    helpText={t.secondHpSource}
                     onChange={(val) => validateAndSetHP('comp2', val)}
                   />
                   <div className="mt-3 p-3 bg-primary-50 rounded-md border border-primary-200">
-                    <div className="text-xs text-primary-700 font-medium">Total HP</div>
+                    <div className="text-xs text-primary-700 font-medium">{t.totalHp}</div>
                     <div className="text-lg font-bold text-primary-900">{totalHP.toLocaleString('pt-BR')} Sm³/d</div>
                   </div>
                 </div>
@@ -205,7 +214,7 @@ export default function Sidebar({ onDataChange }) {
               >
                 <div className="flex items-center gap-2">
                   <Activity size={16} className="text-primary-600" />
-                  <span className="font-medium text-sm">LP FLARE</span>
+                  <span className="font-medium text-sm">{t.lpFlare}</span>
                 </div>
                 {expandedSections.lpFlare ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
               </button>
@@ -213,27 +222,27 @@ export default function Sidebar({ onDataChange }) {
               {expandedSections.lpFlare && (
                 <div className="p-4 space-y-3">
                   <UnitInput
-                    label="Componente 3"
+                    label={t.component3}
                     unitType="volume_flow"
                     defaultValue={10000}
                     defaultUnit="Sm³/d"
                     maxValue={100000}
                     step={100}
-                    helpText="Primeira fonte LP"
+                    helpText={t.firstLpSource}
                     onChange={(val) => validateAndSetLP('comp3', val)}
                   />
                   <UnitInput
-                    label="Componente 4"
+                    label={t.component4}
                     unitType="volume_flow"
                     defaultValue={8000}
                     defaultUnit="Sm³/d"
                     maxValue={100000}
                     step={100}
-                    helpText="Segunda fonte LP"
+                    helpText={t.secondLpSource}
                     onChange={(val) => validateAndSetLP('comp4', val)}
                   />
                   <div className="mt-3 p-3 bg-primary-50 rounded-md border border-primary-200">
-                    <div className="text-xs text-primary-700 font-medium">Total LP</div>
+                    <div className="text-xs text-primary-700 font-medium">{t.totalLp}</div>
                     <div className="text-lg font-bold text-primary-900">{totalLP.toLocaleString('pt-BR')} Sm³/d</div>
                   </div>
                 </div>
@@ -243,7 +252,7 @@ export default function Sidebar({ onDataChange }) {
             {/* Total Flaring */}
             <div className={`p-4 rounded-lg border-2 ${deltaFromLimit > 0 ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
               <div className="text-sm font-medium mb-2">
-                🔥 Total Flaring (HP + LP)
+                {t.totalFlaringHpLp}
               </div>
               <div className="text-2xl font-bold mb-2">
                 {totalFlaring.toLocaleString('pt-BR')} Sm³/d
@@ -251,7 +260,7 @@ export default function Sidebar({ onDataChange }) {
               <div className={`text-xs ${deltaFromLimit > 0 ? 'text-red-700' : 'text-green-700'}`}>
                 {deltaFromLimit > 0 ? '⚠️ ' : '✅ '}
                 {Math.abs(deltaFromLimit).toLocaleString('pt-BR')} Sm³/d
-                {deltaFromLimit > 0 ? ' acima do limite' : ' abaixo do limite'}
+                {deltaFromLimit > 0 ? t.aboveLimit : t.belowLimit}
               </div>
             </div>
           </div>
@@ -259,7 +268,7 @@ export default function Sidebar({ onDataChange }) {
 
         {/* Compressores */}
         <div className="pt-4 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">Dados Operacionais</h3>
+          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t.operationalData}</h3>
 
           {/* Compressor HP */}
           <div className="border border-gray-200 rounded-lg overflow-hidden mb-3">
@@ -267,14 +276,14 @@ export default function Sidebar({ onDataChange }) {
               onClick={() => toggleSection('hpCompressor')}
               className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
             >
-              <span className="font-medium text-sm">Compressor HP</span>
+              <span className="font-medium text-sm">{t.hpCompressor}</span>
               {expandedSections.hpCompressor ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
 
             {expandedSections.hpCompressor && (
               <div className="p-4 space-y-3">
                 <UnitInput
-                  label="Vazão"
+                  label={t.flow}
                   unitType="volume_flow"
                   defaultValue={250000}
                   minValue={50000}
@@ -283,7 +292,7 @@ export default function Sidebar({ onDataChange }) {
                   onChange={(val) => validateAndSetCompressor('HP', 'vazao', val, 'flow')}
                 />
                 <UnitInput
-                  label="Pressão"
+                  label={t.pressure}
                   unitType="pressure"
                   defaultValue={151}
                   maxValue={200}
@@ -291,7 +300,7 @@ export default function Sidebar({ onDataChange }) {
                   onChange={(val) => validateAndSetCompressor('HP', 'pressao', val, 'pressure')}
                 />
                 <UnitInput
-                  label="Temperatura"
+                  label={t.temperature}
                   unitType="temperature"
                   defaultValue={80}
                   maxValue={150}
@@ -308,14 +317,14 @@ export default function Sidebar({ onDataChange }) {
               onClick={() => toggleSection('lpCompressor')}
               className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
             >
-              <span className="font-medium text-sm">Compressor LP</span>
+              <span className="font-medium text-sm">{t.lpCompressor}</span>
               {expandedSections.lpCompressor ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
 
             {expandedSections.lpCompressor && (
               <div className="p-4 space-y-3">
                 <UnitInput
-                  label="Vazão"
+                  label={t.flow}
                   unitType="volume_flow"
                   defaultValue={200000}
                   minValue={50000}
@@ -324,7 +333,7 @@ export default function Sidebar({ onDataChange }) {
                   onChange={(val) => validateAndSetCompressor('LP', 'vazao', val, 'flow')}
                 />
                 <UnitInput
-                  label="Pressão"
+                  label={t.pressure}
                   unitType="pressure"
                   defaultValue={10}
                   maxValue={50}
@@ -332,7 +341,7 @@ export default function Sidebar({ onDataChange }) {
                   onChange={(val) => validateAndSetCompressor('LP', 'pressao', val, 'pressure')}
                 />
                 <UnitInput
-                  label="Temperatura"
+                  label={t.temperature}
                   unitType="temperature"
                   defaultValue={60}
                   maxValue={150}
@@ -349,14 +358,14 @@ export default function Sidebar({ onDataChange }) {
               onClick={() => toggleSection('blower')}
               className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
             >
-              <span className="font-medium text-sm">Compressor Blower</span>
+              <span className="font-medium text-sm">{t.blowerCompressor}</span>
               {expandedSections.blower ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
 
             {expandedSections.blower && (
               <div className="p-4 space-y-3">
                 <UnitInput
-                  label="Vazão"
+                  label={t.flow}
                   unitType="volume_flow"
                   defaultValue={250000}
                   minValue={50000}
@@ -365,7 +374,7 @@ export default function Sidebar({ onDataChange }) {
                   onChange={(val) => validateAndSetCompressor('Blower', 'vazao', val, 'flow')}
                 />
                 <UnitInput
-                  label="Pressão"
+                  label={t.pressure}
                   unitType="pressure"
                   defaultValue={1.913}
                   maxValue={5}
@@ -373,7 +382,7 @@ export default function Sidebar({ onDataChange }) {
                   onChange={(val) => validateAndSetCompressor('Blower', 'pressao', val, 'pressure')}
                 />
                 <UnitInput
-                  label="Temperatura"
+                  label={t.temperature}
                   unitType="temperature"
                   defaultValue={50}
                   maxValue={150}

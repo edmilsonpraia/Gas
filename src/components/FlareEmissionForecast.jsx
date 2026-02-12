@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import { Activity, AlertCircle, TreeDeciduous } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Componente de Previsão de Queima de Gás usando RF e KNN
@@ -8,6 +9,7 @@ import { Activity, AlertCircle, TreeDeciduous } from 'lucide-react';
  * Cenário Atual vs Cenário Proposto
  */
 export default function FlareEmissionForecast({ data }) {
+  const { t } = useLanguage();
   const [predictions, setPredictions] = useState({ atual: null, proposto: null });
   const [isTraining, setIsTraining] = useState(false);
   const [metrics, setMetrics] = useState({ atual: null, proposto: null });
@@ -534,49 +536,49 @@ export default function FlareEmissionForecast({ data }) {
     {
       x: chartData.historical.map(d => d.date),
       y: chartData.historical.map(d => d.flaring),
-      name: 'Dados Históricos',
+      name: t.historicalData,
       type: 'scatter',
       mode: 'lines+markers',
       line: { color: '#64748b', width: 2 },
       marker: { size: 5, color: '#64748b' },
-      hovertemplate: '<b>Histórico</b><br>Data: %{x|%b %Y}<br>Queima: %{y:,.0f} Sm³/d<extra></extra>'
+      hovertemplate: `<b>${t.historicalLabel}</b><br>${t.dateLabel}: %{x|%b %Y}<br>${t.flaringLabel}: %{y:,.0f} Sm³/d<extra></extra>`
     },
     predictions.atual && {
       x: chartData.predictionsAtual.map(d => d.date),
       y: chartData.predictionsAtual.map(d => d.flaring),
-      name: 'Sistema Atual (Sem Recuperação)',
+      name: t.currentSystemNoRecovery,
       type: 'scatter',
       mode: 'lines+markers',
       line: { color: '#dc2626', width: 3, dash: 'dash' },
       marker: { size: 8, color: '#dc2626', symbol: 'x' },
-      hovertemplate: '<b>Sistema Atual</b><br>Data: %{x|%b %Y}<br>Queima: %{y:,.0f} Sm³/d<extra></extra>'
+      hovertemplate: `<b>${t.currentSystemTitle}</b><br>${t.dateLabel}: %{x|%b %Y}<br>${t.flaringLabel}: %{y:,.0f} Sm³/d<extra></extra>`
     },
     predictions.proposto && {
       x: chartData.predictionsProposto.map(d => d.date),
       y: chartData.predictionsProposto.map(d => d.flaring),
-      name: 'Sistema Proposto (Com Recuperação)',
+      name: t.proposedSystemWithRecovery,
       type: 'scatter',
       mode: 'lines+markers',
       line: { color: '#10b981', width: 3, dash: 'solid' },
       marker: { size: 8, color: '#10b981', symbol: 'diamond' },
       fill: 'tonexty',
       fillcolor: 'rgba(16, 185, 129, 0.1)',
-      hovertemplate: '<b>Sistema Proposto</b><br>Data: %{x|%b %Y}<br>Queima: %{y:,.0f} Sm³/d<extra></extra>'
+      hovertemplate: `<b>${t.proposedSystemTitle}</b><br>${t.dateLabel}: %{x|%b %Y}<br>${t.flaringLabel}: %{y:,.0f} Sm³/d<extra></extra>`
     }
   ].filter(Boolean);
 
   const layout = {
     title: {
-      text: 'Previsão de Queima',
+      text: t.flaringForecast,
       font: { size: 18, weight: 700, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Período', font: { size: 13, weight: 600 } },
+      title: { text: t.periodLabel, font: { size: 13, weight: 600 } },
       type: 'date',
       gridcolor: '#e5e7eb'
     },
     yaxis: {
-      title: { text: 'Queima de Gás (Sm³/d)', font: { size: 13, weight: 600 } },
+      title: { text: t.gasFlaringSm3d, font: { size: 13, weight: 600 } },
       tickformat: ',.0f',
       gridcolor: '#e5e7eb'
     },
@@ -613,7 +615,7 @@ export default function FlareEmissionForecast({ data }) {
       {
         x: chartData.historical[chartData.historical.length - 1].date,
         y: Math.max(...chartData.historical.map(d => d.flaring)) * 1.15,
-        text: 'Início das Previsões',
+        text: t.startOfPredictions,
         showarrow: true,
         arrowhead: 2,
         arrowcolor: '#94a3b8',
@@ -636,14 +638,14 @@ export default function FlareEmissionForecast({ data }) {
           <div className="flex items-center gap-3">
             <Activity size={24} className="text-blue-600" />
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Previsão com Machine Learning</h3>
-              <p className="text-xs text-gray-600">Sistema Atual vs Sistema Proposto - Próximos 6 meses</p>
+              <h3 className="text-lg font-bold text-gray-900">{t.mlForecast}</h3>
+              <p className="text-xs text-gray-600">{t.currentVsProposedNext6Months}</p>
             </div>
           </div>
 
           {!isTraining && !error && (
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-700">Modelo:</span>
+              <span className="text-xs font-semibold text-gray-700">{t.modelLabel}</span>
               <button
                 onClick={() => setSelectedModel('rf')}
                 className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
@@ -670,14 +672,14 @@ export default function FlareEmissionForecast({ data }) {
           {isTraining && (
             <div className="flex items-center gap-2 text-blue-600">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              <span className="text-xs font-medium">Treinando...</span>
+              <span className="text-xs font-medium">{t.trainingStatus}</span>
             </div>
           )}
 
           {error && (
             <div className="flex items-center gap-2 text-red-600">
               <AlertCircle size={16} />
-              <span className="text-xs font-medium">Erro</span>
+              <span className="text-xs font-medium">{t.errorStatus}</span>
             </div>
           )}
         </div>
@@ -695,7 +697,7 @@ export default function FlareEmissionForecast({ data }) {
               )}
               <h4 className="text-sm font-bold text-gray-900">{metrics.modelName}</h4>
             </div>
-            <span className="text-xs text-gray-500">Métricas de Validação</span>
+            <span className="text-xs text-gray-500">{t.validationMetrics}</span>
           </div>
           <div className="grid grid-cols-4 gap-3">
             <div className="text-center">
@@ -720,11 +722,11 @@ export default function FlareEmissionForecast({ data }) {
               <p className="text-[10px] text-gray-500">Score</p>
             </div>
             <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">{selectedModel === 'rf' ? 'Árvores' : 'K'}</p>
+              <p className="text-xs text-gray-600 mb-1">{selectedModel === 'rf' ? t.treesLabel : 'K'}</p>
               <p className="text-lg font-bold text-gray-900">
                 {selectedModel === 'rf' ? metrics.atual.numTrees : metrics.atual.k}
               </p>
-              <p className="text-[10px] text-gray-500">{selectedModel === 'rf' ? 'Trees' : 'Vizinhos'}</p>
+              <p className="text-[10px] text-gray-500">{selectedModel === 'rf' ? 'Trees' : t.neighborsLabel}</p>
             </div>
           </div>
         </div>
@@ -735,12 +737,12 @@ export default function FlareEmissionForecast({ data }) {
         {isTraining ? (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-600 mb-3"></div>
-            <p className="text-sm font-semibold text-gray-700">Treinando modelo...</p>
+            <p className="text-sm font-semibold text-gray-700">{t.trainingModel}</p>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-16">
             <AlertCircle size={40} className="text-red-500 mb-3" />
-            <p className="text-sm font-semibold text-gray-700">Erro ao treinar modelo</p>
+            <p className="text-sm font-semibold text-gray-700">{t.errorTrainingModel}</p>
             <p className="text-xs text-gray-500 mt-1">{error}</p>
           </div>
         ) : (
@@ -763,15 +765,15 @@ export default function FlareEmissionForecast({ data }) {
           <ul className="list-disc list-inside text-[11px] text-gray-600 space-y-0.5">
             {selectedModel === 'rf' ? (
               <>
-                <li>10 árvores de decisão</li>
-                <li>Profundidade máxima: 4</li>
-                <li>Bootstrap sampling</li>
+                <li>{t.decisionTrees}</li>
+                <li>{t.maxDepth}</li>
+                <li>{t.bootstrapSampling}</li>
               </>
             ) : (
               <>
-                <li>K = 3 vizinhos</li>
-                <li>Distância Euclidiana</li>
-                <li>Média ponderada</li>
+                <li>{t.kNeighbors}</li>
+                <li>{t.euclideanDistance}</li>
+                <li>{t.weightedAverage}</li>
               </>
             )}
           </ul>
@@ -779,21 +781,21 @@ export default function FlareEmissionForecast({ data }) {
 
         {/* Sistema Atual */}
         <div className="card bg-gradient-to-br from-red-50 to-orange-50">
-          <h4 className="text-xs font-bold text-gray-800 mb-2">Sistema Atual</h4>
+          <h4 className="text-xs font-bold text-gray-800 mb-2">{t.currentSystemTitle}</h4>
           <ul className="list-disc list-inside text-[11px] text-gray-600 space-y-0.5">
-            <li>Queima contínua de gás</li>
-            <li>Sem sistema de recuperação</li>
-            <li>Tendência de manutenção/aumento</li>
+            <li>{t.continuousGasFlaring}</li>
+            <li>{t.noRecoverySystem}</li>
+            <li>{t.maintenanceTrend}</li>
           </ul>
         </div>
 
         {/* Sistema Proposto */}
         <div className="card bg-gradient-to-br from-green-50 to-emerald-50">
-          <h4 className="text-xs font-bold text-gray-800 mb-2">Sistema Proposto</h4>
+          <h4 className="text-xs font-bold text-gray-800 mb-2">{t.proposedSystemTitle}</h4>
           <ul className="list-disc list-inside text-[11px] text-gray-600 space-y-0.5">
-            <li>Recuperação de gás (91%)</li>
-            <li>Implementação em 3 meses</li>
-            <li>Estabiliza em ~9% do atual</li>
+            <li>{t.gasRecovery91}</li>
+            <li>{t.implementation3Months}</li>
+            <li>{t.stabilizesAt9Percent}</li>
           </ul>
         </div>
       </div>

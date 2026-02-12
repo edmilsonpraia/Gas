@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import { Play, RotateCcw, TrendingUp } from 'lucide-react';
 import { NumberFormatter } from '../utils/unitConverter';
+import { useLanguage } from '../contexts/LanguageContext';
 
 /**
  * Simulação de Monte Carlo para Análise de Risco Técnico
@@ -11,6 +12,7 @@ import { NumberFormatter } from '../utils/unitConverter';
  * Cenários: Otimista, Moderado e Pessimista
  */
 export default function MonteCarloSimulation({ data }) {
+  const { t } = useLanguage();
   const [simulating, setSimulating] = useState(false);
   const [numIterations, setNumIterations] = useState(10000);
   const [scenario, setScenario] = useState('moderate');
@@ -28,7 +30,7 @@ export default function MonteCarloSimulation({ data }) {
             totalFlaringBase: (data.monitoring?.totals?.totalFlaring || 44000) * 0.85,
             variability: 0.10, // ±10% variabilidade
             recoveryRate: 0.95,
-            description: 'Cenário Otimista: Vazões reduzidas, baixa variabilidade, alta eficiência'
+            description: t.optimisticScenarioDesc
           };
           break;
         case 'pessimistic':
@@ -36,7 +38,7 @@ export default function MonteCarloSimulation({ data }) {
             totalFlaringBase: (data.monitoring?.totals?.totalFlaring || 44000) * 1.15,
             variability: 0.25, // ±25% variabilidade
             recoveryRate: 0.75,
-            description: 'Cenário Pessimista: Vazões elevadas, alta variabilidade, baixa eficiência'
+            description: t.pessimisticScenarioDesc
           };
           break;
         default: // moderate
@@ -44,7 +46,7 @@ export default function MonteCarloSimulation({ data }) {
             totalFlaringBase: data.monitoring?.totals?.totalFlaring || 44000,
             variability: 0.15, // ±15% variabilidade
             recoveryRate: 0.85,
-            description: 'Cenário Moderado: Valores nominais, variabilidade média'
+            description: t.moderateScenarioDesc
           };
       }
 
@@ -142,7 +144,7 @@ export default function MonteCarloSimulation({ data }) {
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Executando simulação de Monte Carlo...</p>
+            <p className="text-gray-600">{t.monteCarloLoading}</p>
           </div>
         </div>
       </div>
@@ -157,10 +159,10 @@ export default function MonteCarloSimulation({ data }) {
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
               <TrendingUp size={24} className="text-purple-600" />
-              Simulação de Monte Carlo
+              {t.monteCarloTitle}
             </h3>
             <p className="text-sm text-gray-600">
-              Análise de risco com {numIterations.toLocaleString('pt-BR')} iterações
+              {t.riskAnalysisWith} {numIterations.toLocaleString('pt-BR')} {t.iterations}
             </p>
           </div>
           <div className="flex gap-3">
@@ -170,9 +172,9 @@ export default function MonteCarloSimulation({ data }) {
               className="input-field"
               disabled={simulating}
             >
-              <option value="optimistic">Cenário Otimista</option>
-              <option value="moderate">Cenário Moderado</option>
-              <option value="pessimistic">Cenário Pessimista</option>
+              <option value="optimistic">{t.optimisticScenario}</option>
+              <option value="moderate">{t.moderateScenario}</option>
+              <option value="pessimistic">{t.pessimisticScenario}</option>
             </select>
             <select
               value={numIterations}
@@ -180,10 +182,10 @@ export default function MonteCarloSimulation({ data }) {
               className="input-field"
               disabled={simulating}
             >
-              <option value={1000}>1.000 iterações</option>
-              <option value={5000}>5.000 iterações</option>
-              <option value={10000}>10.000 iterações</option>
-              <option value={50000}>50.000 iterações</option>
+              <option value={1000}>{t.iterationsOption1}</option>
+              <option value={5000}>{t.iterationsOption2}</option>
+              <option value={10000}>{t.iterationsOption3}</option>
+              <option value={50000}>{t.iterationsOption4}</option>
             </select>
             <button
               onClick={runSimulation}
@@ -193,12 +195,12 @@ export default function MonteCarloSimulation({ data }) {
               {simulating ? (
                 <>
                   <RotateCcw size={18} className="animate-spin" />
-                  Simulando...
+                  {t.simulating}
                 </>
               ) : (
                 <>
                   <Play size={18} />
-                  Executar
+                  {t.execute}
                 </>
               )}
             </button>
@@ -210,34 +212,34 @@ export default function MonteCarloSimulation({ data }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Total Flaring */}
         <div className="card">
-          <h4 className="font-bold text-gray-800 mb-4">Estatísticas - Total Flaring (Sm³/d)</h4>
+          <h4 className="font-bold text-gray-800 mb-4">{t.statisticsTotalFlaring}</h4>
           <div className="space-y-2">
             <div className="flex justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600">Média:</span>
+              <span className="text-gray-600">{t.mean}</span>
               <span className="font-bold text-primary-600">
                 {NumberFormatter.format(results.totalFlaring.stats.mean, 0)}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600">Desvio Padrão:</span>
+              <span className="text-gray-600">{t.standardDeviation}</span>
               <span className="font-semibold text-gray-800">
                 ±{NumberFormatter.format(results.totalFlaring.stats.stdDev, 0)}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600">Mínimo:</span>
+              <span className="text-gray-600">{t.minimum}</span>
               <span className="font-semibold text-green-600">
                 {NumberFormatter.format(results.totalFlaring.stats.min, 0)}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600">Máximo:</span>
+              <span className="text-gray-600">{t.maximum}</span>
               <span className="font-semibold text-red-600">
                 {NumberFormatter.format(results.totalFlaring.stats.max, 0)}
               </span>
             </div>
             <div className="flex justify-between py-2 bg-blue-50 px-3 rounded mt-2">
-              <span className="text-blue-900 font-semibold">Percentil 95%:</span>
+              <span className="text-blue-900 font-semibold">{t.percentile95}</span>
               <span className="font-bold text-blue-700">
                 {NumberFormatter.format(results.totalFlaring.stats.p95, 0)}
               </span>
@@ -247,34 +249,34 @@ export default function MonteCarloSimulation({ data }) {
 
         {/* Emissões */}
         <div className="card">
-          <h4 className="font-bold text-gray-800 mb-4">Estatísticas - Emissões (tCO₂eq/ano)</h4>
+          <h4 className="font-bold text-gray-800 mb-4">{t.statisticsEmissions}</h4>
           <div className="space-y-2">
             <div className="flex justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600">Média:</span>
+              <span className="text-gray-600">{t.mean}</span>
               <span className="font-bold text-primary-600">
                 {NumberFormatter.format(results.emissoes.stats.mean, 0)}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600">Desvio Padrão:</span>
+              <span className="text-gray-600">{t.standardDeviation}</span>
               <span className="font-semibold text-gray-800">
                 ±{NumberFormatter.format(results.emissoes.stats.stdDev, 0)}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600">Mínimo:</span>
+              <span className="text-gray-600">{t.minimum}</span>
               <span className="font-semibold text-green-600">
                 {NumberFormatter.format(results.emissoes.stats.min, 0)}
               </span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-200">
-              <span className="text-gray-600">Máximo:</span>
+              <span className="text-gray-600">{t.maximum}</span>
               <span className="font-semibold text-red-600">
                 {NumberFormatter.format(results.emissoes.stats.max, 0)}
               </span>
             </div>
             <div className="flex justify-between py-2 bg-blue-50 px-3 rounded mt-2">
-              <span className="text-blue-900 font-semibold">Percentil 95%:</span>
+              <span className="text-blue-900 font-semibold">{t.percentile95}</span>
               <span className="font-bold text-blue-700">
                 {NumberFormatter.format(results.emissoes.stats.p95, 0)}
               </span>
@@ -297,22 +299,22 @@ export default function MonteCarloSimulation({ data }) {
                   color: '#3b82f6',
                   line: { color: '#1e40af', width: 1 }
                 },
-                name: 'Frequência',
-                hovertemplate: 'Vazão: %{x:,.0f} Sm³/d<br>Frequência: %{y}<extra></extra>'
+                name: t.frequency,
+                hovertemplate: `${t.flowLabel2}: %{x:,.0f} Sm³/d<br>${t.frequency}: %{y}<extra></extra>`
               }
             ]}
             layout={{
               title: {
-                text: 'Distribuição de Probabilidade - Total Flaring',
+                text: t.probabilityDistributionFlaring,
                 font: { size: 16, weight: 700, family: 'Segoe UI' }
               },
               xaxis: {
-                title: 'Vazão Total (Sm³/d)',
+                title: t.totalFlow,
                 tickformat: ',.0f',
                 gridcolor: '#e5e7eb'
               },
               yaxis: {
-                title: 'Frequência',
+                title: t.frequency,
                 gridcolor: '#e5e7eb'
               },
               plot_bgcolor: '#fafafa',
@@ -339,7 +341,7 @@ export default function MonteCarloSimulation({ data }) {
                   x: 61000,
                   y: 1,
                   yref: 'paper',
-                  text: 'Limite 61k',
+                  text: t.limit61k,
                   showarrow: false,
                   font: { color: '#ef4444', size: 12 },
                   xshift: 40,
@@ -369,22 +371,22 @@ export default function MonteCarloSimulation({ data }) {
                   color: '#10b981',
                   line: { color: '#059669', width: 1 }
                 },
-                name: 'Frequência',
-                hovertemplate: 'Emissões: %{x:,.0f} tCO₂eq/ano<br>Frequência: %{y}<extra></extra>'
+                name: t.frequency,
+                hovertemplate: `${t.emissionsLabel2}: %{x:,.0f} tCO₂eq/ano<br>${t.frequency}: %{y}<extra></extra>`
               }
             ]}
             layout={{
               title: {
-                text: 'Distribuição de Probabilidade - Emissões',
+                text: t.probabilityDistributionEmissions,
                 font: { size: 16, weight: 700, family: 'Segoe UI' }
               },
               xaxis: {
-                title: 'Emissões (tCO₂eq/ano)',
+                title: t.emissionsTco2Year2,
                 tickformat: ',.0f',
                 gridcolor: '#e5e7eb'
               },
               yaxis: {
-                title: 'Frequência',
+                title: t.frequency,
                 gridcolor: '#e5e7eb'
               },
               plot_bgcolor: '#fafafa',
@@ -437,11 +439,11 @@ export default function MonteCarloSimulation({ data }) {
             ]}
             layout={{
               title: {
-                text: 'Box Plot - Variabilidade dos Componentes',
+                text: t.boxPlotVariability,
                 font: { size: 18, weight: 700, family: 'Segoe UI' }
               },
               yaxis: {
-                title: 'Vazão (Sm³/d)',
+                title: t.flowSm3d2,
                 tickformat: ',.0f',
                 gridcolor: '#e5e7eb'
               },
@@ -463,7 +465,7 @@ export default function MonteCarloSimulation({ data }) {
 
       {/* Análise de Risco Técnico */}
       <div className="card">
-        <h4 className="font-bold text-gray-800 mb-4">Análise de Risco Operacional</h4>
+        <h4 className="font-bold text-gray-800 mb-4">{t.operationalRiskAnalysis}</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className={`p-4 rounded-lg border-2 ${
             (results.totalFlaring.stats.p95 > 61000)
@@ -471,7 +473,7 @@ export default function MonteCarloSimulation({ data }) {
               : 'bg-green-50 border-green-300'
           }`}>
             <div className="text-sm font-semibold mb-1">
-              Probabilidade de Exceder Limite (61k Sm³/d)
+              {t.probabilityExceedLimit}
             </div>
             <div className="text-3xl font-bold">
               {((results.totalFlaring.samples.filter(x => x > 61000).length / numIterations) * 100).toFixed(1)}%
@@ -480,7 +482,7 @@ export default function MonteCarloSimulation({ data }) {
 
           <div className="p-4 rounded-lg border-2 bg-blue-50 border-blue-300">
             <div className="text-sm font-semibold text-blue-900 mb-1">
-              Intervalo de Confiança (90%)
+              {t.confidenceInterval90}
             </div>
             <div className="text-lg font-bold text-blue-700">
               {NumberFormatter.format(results.totalFlaring.stats.p5, 0)} - {NumberFormatter.format(results.totalFlaring.stats.p95, 0)} Sm³/d
@@ -489,7 +491,7 @@ export default function MonteCarloSimulation({ data }) {
 
           <div className="p-4 rounded-lg border-2 bg-purple-50 border-purple-300">
             <div className="text-sm font-semibold text-purple-900 mb-1">
-              Coeficiente de Variação
+              {t.variationCoefficient}
             </div>
             <div className="text-3xl font-bold text-purple-700">
               {((results.totalFlaring.stats.stdDev / results.totalFlaring.stats.mean) * 100).toFixed(1)}%
@@ -499,30 +501,30 @@ export default function MonteCarloSimulation({ data }) {
 
         {/* Cenários Técnicos */}
         <div className="mt-6">
-          <h5 className="font-semibold text-gray-800 mb-3">Cenários Técnicos Analisados</h5>
+          <h5 className="font-semibold text-gray-800 mb-3">{t.technicalScenariosAnalyzed}</h5>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <h6 className="font-semibold text-green-900 text-sm mb-2">Cenário Otimista</h6>
+              <h6 className="font-semibold text-green-900 text-sm mb-2">{t.optimisticScenario}</h6>
               <ul className="text-xs text-green-800 space-y-1">
-                <li>• Vazões 15% abaixo do nominal</li>
-                <li>• Variabilidade baixa (±10%)</li>
-                <li>• Eficiência operacional alta</li>
+                <li>{t.optimisticScenarioFeature1}</li>
+                <li>{t.optimisticScenarioFeature2}</li>
+                <li>{t.optimisticScenarioFeature3}</li>
               </ul>
             </div>
             <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <h6 className="font-semibold text-blue-900 text-sm mb-2">Cenário Moderado</h6>
+              <h6 className="font-semibold text-blue-900 text-sm mb-2">{t.moderateScenario}</h6>
               <ul className="text-xs text-blue-800 space-y-1">
-                <li>• Vazões nominais</li>
-                <li>• Variabilidade média (±15%)</li>
-                <li>• Eficiência operacional padrão</li>
+                <li>{t.moderateScenarioFeature1}</li>
+                <li>{t.moderateScenarioFeature2}</li>
+                <li>{t.moderateScenarioFeature3}</li>
               </ul>
             </div>
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <h6 className="font-semibold text-red-900 text-sm mb-2">Cenário Pessimista</h6>
+              <h6 className="font-semibold text-red-900 text-sm mb-2">{t.pessimisticScenario}</h6>
               <ul className="text-xs text-red-800 space-y-1">
-                <li>• Vazões 15% acima do nominal</li>
-                <li>• Variabilidade alta (±25%)</li>
-                <li>• Eficiência operacional baixa</li>
+                <li>{t.pessimisticScenarioFeature1}</li>
+                <li>{t.pessimisticScenarioFeature2}</li>
+                <li>{t.pessimisticScenarioFeature3}</li>
               </ul>
             </div>
           </div>

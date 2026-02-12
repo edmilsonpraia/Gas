@@ -272,6 +272,7 @@ export function CompressorFlowChart({ data }) {
  * Gráfico de Série Temporal - Projeção de Vazões
  */
 export function TimeSeriesChart({ data }) {
+  const { t } = useLanguage();
   const totalFlaring = (data.monitoring?.totals?.totalFlaring || 44000);
 
   // Simular dados históricos e projeção
@@ -314,7 +315,7 @@ export function TimeSeriesChart({ data }) {
     {
       x: xData,
       y: historico,
-      name: 'Histórico',
+      name: t.historical,
       type: 'scatter',
       mode: 'lines+markers',
       line: { color: '#3b82f6', width: 3 },
@@ -324,7 +325,7 @@ export function TimeSeriesChart({ data }) {
     {
       x: xData,
       y: projecao,
-      name: 'Projeção',
+      name: t.projection,
       type: 'scatter',
       mode: 'lines+markers',
       line: { color: '#10b981', width: 3, dash: 'dash' },
@@ -334,26 +335,26 @@ export function TimeSeriesChart({ data }) {
     {
       x: xData,
       y: limite,
-      name: 'Limite 61k',
+      name: t.limit61k,
       type: 'scatter',
       mode: 'lines',
       line: { color: '#ef4444', width: 2, dash: 'dot' },
-      hovertemplate: '<b>Limite</b><br>61,000 Sm³/d<extra></extra>'
+      hovertemplate: `<b>${t.limit}</b><br>61,000 Sm³/d<extra></extra>`
     }
   ];
 
   const layout = {
     title: {
-      text: 'Série Temporal - Vazão de Flaring (2024-2026)',
+      text: t.timeSeriesFlaring,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Período', font: { size: 11, weight: 500 } },
+      title: { text: t.period, font: { size: 11, weight: 500 } },
       gridcolor: '#e5e7eb',
       tickangle: -45
     },
     yaxis: {
-      title: { text: 'Vazão Total (Sm³/d)', font: { size: 11, weight: 500 } },
+      title: { text: t.totalFlow, font: { size: 11, weight: 500 } },
       tickformat: ',.0f',
       gridcolor: '#e5e7eb'
     },
@@ -384,6 +385,7 @@ export function TimeSeriesChart({ data }) {
  * Gráfico de Waterfall - Análise de Contribuições
  */
 export function WaterfallChart({ data }) {
+  const { t } = useLanguage();
   const hp1 = data.monitoring?.hpFlare?.comp1 || 0;
   const hp2 = data.monitoring?.hpFlare?.comp2 || 0;
   const lp1 = data.monitoring?.lpFlare?.comp3 || 0;
@@ -421,15 +423,15 @@ export function WaterfallChart({ data }) {
 
   const layout = {
     title: {
-      text: 'Análise de Contribuições - Waterfall',
+      text: t.waterfallAnalysis,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Componentes', font: { size: 11, weight: 500 } },
+      title: { text: t.components, font: { size: 11, weight: 500 } },
       gridcolor: '#e5e7eb'
     },
     yaxis: {
-      title: { text: 'Vazão (Sm³/d)', font: { size: 11, weight: 500 } },
+      title: { text: t.flowSm3d, font: { size: 11, weight: 500 } },
       tickformat: ',.0f',
       gridcolor: '#e5e7eb'
     },
@@ -453,8 +455,9 @@ export function WaterfallChart({ data }) {
  * Heatmap - Performance dos Equipamentos
  */
 export function PerformanceHeatmap({ data }) {
-  const equipamentos = ['HP Compressor', 'LP Compressor', 'Blower'];
-  const parametros = ['Vazão', 'Pressão', 'Temperatura', 'Eficiência'];
+  const { t } = useLanguage();
+  const equipamentos = [t.hpCompressor, t.lpCompressor, t.blower];
+  const parametros = [t.flowParam, t.pressureParam, t.temperatureParam, t.efficiencyParam];
 
   // Normalizar valores para 0-100
   const vazaoMax = 500000;
@@ -493,7 +496,7 @@ export function PerformanceHeatmap({ data }) {
       ],
       hovertemplate: '<b>%{y}</b><br>%{x}<br>%{z:.1f}%<extra></extra>',
       colorbar: {
-        title: 'Performance (%)',
+        title: t.performancePercent,
         titleside: 'right'
       }
     }
@@ -501,15 +504,15 @@ export function PerformanceHeatmap({ data }) {
 
   const layout = {
     title: {
-      text: 'Heatmap - Performance dos Equipamentos',
+      text: t.heatmapPerformance,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Equipamentos', font: { size: 11, weight: 500 } },
+      title: { text: t.equipments, font: { size: 11, weight: 500 } },
       side: 'bottom'
     },
     yaxis: {
-      title: { text: 'Parâmetros', font: { size: 11, weight: 500 } }
+      title: { text: t.parameters, font: { size: 11, weight: 500 } }
     },
     plot_bgcolor: '#fafafa',
     paper_bgcolor: 'white',
@@ -537,21 +540,21 @@ export function PerformanceHeatmap({ data }) {
  * Gráfico de Comparação de Emissões - Atual vs Proposto
  */
 export function EmissionsComparisonChart({ data }) {
-
+  const { t } = useLanguage();
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
 
   const plotData = [
     {
-      x: ['LP Flare', 'HP Flare', 'Hull Vent', 'Total'],
+      x: [t.lpFlare, t.hpFlare, t.hullVent, t.total],
       y: [
         cenarioAtual.emissoes_lp_flare,
         cenarioAtual.emissoes_hp_flare,
         cenarioAtual.emissoes_hull,
         cenarioAtual.emissoes_total
       ],
-      name: 'Sistema Atual',
+      name: t.currentSystem,
       type: 'bar',
       marker: {
         color: '#dc2626',
@@ -564,17 +567,17 @@ export function EmissionsComparisonChart({ data }) {
         `${cenarioAtual.emissoes_total.toFixed(0)}`
       ],
       textposition: 'outside',
-      hovertemplate: '<b>%{x}</b><br>Sistema Atual: %{y:,.0f} tCO₂eq/ano<extra></extra>'
+      hovertemplate: `<b>%{x}</b><br>${t.currentSystem}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
     },
     {
-      x: ['LP Flare', 'HP Flare', 'Hull Vent', 'Total'],
+      x: [t.lpFlare, t.hpFlare, t.hullVent, t.total],
       y: [
         cenarioProposto.emissoes_lp_flare,
         cenarioProposto.emissoes_hp_flare,
         cenarioProposto.emissoes_hull,
         cenarioProposto.emissoes_total
       ],
-      name: 'Sistema Proposto',
+      name: t.proposedSystem,
       type: 'bar',
       marker: {
         color: '#10b981',
@@ -587,21 +590,21 @@ export function EmissionsComparisonChart({ data }) {
         `${cenarioProposto.emissoes_total.toFixed(0)}`
       ],
       textposition: 'outside',
-      hovertemplate: '<b>%{x}</b><br>Sistema Proposto: %{y:,.0f} tCO₂eq/ano<extra></extra>'
+      hovertemplate: `<b>%{x}</b><br>${t.proposedSystem}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
     }
   ];
 
   const layout = {
     title: {
-      text: 'Comparação de Emissões: Sistema Atual vs Sistema Proposto',
+      text: t.emissionsComparisonTitle,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Fonte de Emissão', font: { size: 11, weight: 500 } },
+      title: { text: t.emissionSource, font: { size: 11, weight: 500 } },
       gridcolor: '#e5e7eb'
     },
     yaxis: {
-      title: { text: 'Emissões (tCO₂eq/ano)', font: { size: 11, weight: 500 } },
+      title: { text: t.emissionsUnit, font: { size: 11, weight: 500 } },
       tickformat: ',.0f',
       gridcolor: '#e5e7eb'
     },
@@ -635,7 +638,7 @@ export function EmissionsComparisonChart({ data }) {
  * Gráfico de Redução de Emissões por Fonte
  */
 export function EmissionsReductionChart({ data }) {
-
+  const { t } = useLanguage();
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
@@ -649,7 +652,7 @@ export function EmissionsReductionChart({ data }) {
 
   const plotData = [
     {
-      x: ['LP Flare', 'HP Flare', 'Hull Vent'],
+      x: [t.lpFlare, t.hpFlare, t.hullVent],
       y: [reducaoLP, reducaoHP, reducaoHull],
       type: 'bar',
       marker: {
@@ -662,21 +665,21 @@ export function EmissionsReductionChart({ data }) {
         `${reducaoHull.toFixed(0)} tCO₂eq<br>(${((reducaoHull/cenarioAtual.emissoes_hull)*100).toFixed(1)}%)`
       ],
       textposition: 'outside',
-      hovertemplate: '<b>%{x}</b><br>Redução: %{y:,.0f} tCO₂eq/ano<extra></extra>'
+      hovertemplate: `<b>%{x}</b><br>${t.reduction}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
     }
   ];
 
   const layout = {
     title: {
-      text: `Redução de Emissões por Fonte (Total: ${percReducao}%)`,
+      text: t.emissionReductionBySource.replace('{percent}', percReducao),
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     xaxis: {
-      title: { text: 'Fonte', font: { size: 11, weight: 500 } },
+      title: { text: t.source, font: { size: 11, weight: 500 } },
       gridcolor: '#e5e7eb'
     },
     yaxis: {
-      title: { text: 'Redução (tCO₂eq/ano)', font: { size: 11, weight: 500 } },
+      title: { text: t.reductionUnit, font: { size: 11, weight: 500 } },
       tickformat: ',.0f',
       gridcolor: '#e5e7eb'
     },
@@ -687,7 +690,7 @@ export function EmissionsReductionChart({ data }) {
     font: { family: 'Segoe UI, sans-serif' },
     annotations: [
       {
-        text: `<b>Redução Total: ${reducaoTotal.toFixed(0)} tCO₂eq/ano</b>`,
+        text: `<b>${t.totalReductionLabel}: ${reducaoTotal.toFixed(0)} tCO₂eq/ano</b>`,
         xref: 'paper',
         yref: 'paper',
         x: 0.5,
@@ -712,7 +715,7 @@ export function EmissionsReductionChart({ data }) {
  * Gráfico de Fluxo de Gás (Sankey Diagram)
  */
 export function GasFlowSankeyChart({ data }) {
-
+  const { t } = useLanguage();
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
@@ -729,14 +732,14 @@ export function GasFlowSankeyChart({ data }) {
         thickness: 20,
         line: { color: '#000', width: 0.5 },
         label: [
-          'Gás Produzido',
-          'LP Flare',
-          'HP Flare',
-          'Hull Vent',
-          'Sistema Atual',
-          'Sistema de Recuperação',
-          'Flaring Residual',
-          'Gás Recuperado'
+          t.producedGas,
+          t.lpFlare,
+          t.hpFlare,
+          t.hullVent,
+          t.currentSystemNode,
+          t.recoverySystem,
+          t.residualFlaring,
+          t.recoveredGasNode
         ],
         color: [
           '#3b82f6', // Gás Produzido
@@ -778,7 +781,7 @@ export function GasFlowSankeyChart({ data }) {
 
   const layout = {
     title: {
-      text: 'Fluxo de Gás: Sistema Atual → Sistema Proposto',
+      text: t.gasFlowTitle,
       font: { size: 14, weight: 600, family: 'Segoe UI, sans-serif' }
     },
     plot_bgcolor: '#fafafa',
@@ -861,7 +864,7 @@ export function EnvironmentalImpactChart({ data }) {
       gridcolor: '#e5e7eb'
     },
     yaxis: {
-      title: { text: 'Quantidade', font: { size: 11, weight: 500 } },
+      title: { text: t.quantity, font: { size: 11, weight: 500 } },
       tickformat: ',.0f',
       gridcolor: '#e5e7eb'
     },
