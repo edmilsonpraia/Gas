@@ -9,6 +9,116 @@ import UnitInput from './UnitInput';
 import { DataValidator } from '../utils/validators';
 import { useLanguage } from '../contexts/LanguageContext';
 
+// --- Sub-components defined OUTSIDE to avoid remounting ---
+
+function SectionHeader({ label, sectionKey, badge, isDark, isExpanded, onToggle }) {
+  return (
+    <button
+      onClick={() => onToggle(sectionKey)}
+      className="w-full flex items-center gap-1 transition-colors"
+      style={{
+        padding: '4px 8px',
+        backgroundColor: isDark ? '#383838' : '#e8e8e8',
+        color: isDark ? '#cccccc' : '#616161',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = isDark ? '#404040' : '#d6d6d6';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = isDark ? '#383838' : '#e8e8e8';
+      }}
+    >
+      {isExpanded ? (
+        <ChevronDown12Regular className="w-3 h-3 flex-shrink-0" />
+      ) : (
+        <ChevronRight12Regular className="w-3 h-3 flex-shrink-0" />
+      )}
+      <span style={{
+        fontSize: 11,
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        flex: 1,
+        textAlign: 'left',
+      }}>
+        {label}
+      </span>
+      {badge && (
+        <span style={{
+          fontSize: 9,
+          fontWeight: 600,
+          padding: '1px 6px',
+          borderRadius: 10,
+          backgroundColor: badge.color || '#007acc',
+          color: '#ffffff',
+          lineHeight: '14px',
+        }}>
+          {badge.text}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function TreeItem({ children, isDark, depth = 1 }) {
+  return (
+    <div
+      style={{
+        paddingLeft: depth * 16,
+        borderLeft: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
+        marginLeft: 8,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function TotalBadge({ label, value, unit = 'Sm³/d', color = '#007acc', isDark }) {
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{
+        padding: '4px 8px 4px 24px',
+        fontSize: 11,
+      }}
+    >
+      <span style={{ color: '#858585' }}>{label}</span>
+      <span style={{
+        fontWeight: 600,
+        fontSize: 11,
+        color,
+        fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace",
+      }}>
+        {value.toLocaleString('pt-BR')} {unit}
+      </span>
+    </div>
+  );
+}
+
+function PanelHeader({ title, isDark }) {
+  return (
+    <div
+      className="flex items-center justify-between flex-shrink-0"
+      style={{
+        padding: '8px 12px',
+        borderBottom: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
+      }}
+    >
+      <span style={{
+        fontSize: 11,
+        fontWeight: 700,
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        color: isDark ? '#bbbbbb' : '#616161',
+      }}>
+        {title}
+      </span>
+      <MoreHorizontal16Regular style={{ color: '#858585', cursor: 'pointer' }} />
+    </div>
+  );
+}
+
 /**
  * VS Code-style Sidebar Panel — Explorer tree-view with inputs
  */
@@ -89,7 +199,7 @@ export default function Sidebar({ onDataChange, activeView }) {
   const deltaFromLimit = totalFlaring - limit;
   const isOverLimit = deltaFromLimit > 0;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (onDataChange) {
       onDataChange({
         monitoring: {
@@ -103,115 +213,12 @@ export default function Sidebar({ onDataChange, activeView }) {
     }
   }, [hpValues, lpValues, additionalValues, compressorHP, compressorLP, blower]);
 
-  // --- Sub-components ---
-
-  const SectionHeader = ({ label, sectionKey, badge = null }) => {
-    const isExpanded = expandedSections[sectionKey];
-    return (
-      <button
-        onClick={() => toggleSection(sectionKey)}
-        className="w-full flex items-center gap-1 transition-colors group"
-        style={{
-          padding: '4px 8px',
-          backgroundColor: isDark ? '#383838' : '#e8e8e8',
-          color: isDark ? '#cccccc' : '#616161',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = isDark ? '#404040' : '#d6d6d6';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = isDark ? '#383838' : '#e8e8e8';
-        }}
-      >
-        {isExpanded ? (
-          <ChevronDown12Regular className="w-3 h-3 flex-shrink-0" />
-        ) : (
-          <ChevronRight12Regular className="w-3 h-3 flex-shrink-0" />
-        )}
-        <span style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-          flex: 1,
-          textAlign: 'left',
-        }}>
-          {label}
-        </span>
-        {badge && (
-          <span style={{
-            fontSize: 9,
-            fontWeight: 600,
-            padding: '1px 6px',
-            borderRadius: 10,
-            backgroundColor: badge.color || '#007acc',
-            color: '#ffffff',
-            lineHeight: '14px',
-          }}>
-            {badge.text}
-          </span>
-        )}
-      </button>
-    );
-  };
-
-  const TreeItem = ({ children, depth = 1 }) => (
-    <div
-      style={{
-        paddingLeft: depth * 16,
-        borderLeft: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
-        marginLeft: 8,
-      }}
-    >
-      {children}
-    </div>
-  );
-
-  const TotalBadge = ({ label, value, unit = 'Sm³/d', color = '#007acc' }) => (
-    <div
-      className="flex items-center justify-between"
-      style={{
-        padding: '4px 8px 4px 24px',
-        fontSize: 11,
-      }}
-    >
-      <span style={{ color: isDark ? '#858585' : '#858585' }}>{label}</span>
-      <span style={{
-        fontWeight: 600,
-        fontSize: 11,
-        color,
-        fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace",
-      }}>
-        {value.toLocaleString('pt-BR')} {unit}
-      </span>
-    </div>
-  );
-
   // --- Render views ---
 
   const renderMonitoringView = () => (
     <div className="flex flex-col h-full">
-      {/* Panel Header */}
-      <div
-        className="flex items-center justify-between flex-shrink-0"
-        style={{
-          padding: '8px 12px',
-          borderBottom: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
-        }}
-      >
-        <span style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          color: isDark ? '#bbbbbb' : '#616161',
-        }}>
-          {t.monitoringSystem || 'Monitoramento'}
-        </span>
-        <MoreHorizontal16Regular style={{ color: isDark ? '#858585' : '#858585', cursor: 'pointer' }} />
-      </div>
+      <PanelHeader title={t.monitoringSystem || 'Monitoramento'} isDark={isDark} />
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {/* Toggle monitoring */}
         <div
@@ -245,9 +252,12 @@ export default function Sidebar({ onDataChange, activeView }) {
               label={t.hpFlare || 'HP Flare'}
               sectionKey="hpFlare"
               badge={{ text: totalHP.toLocaleString('pt-BR'), color: '#007acc' }}
+              isDark={isDark}
+              isExpanded={expandedSections.hpFlare}
+              onToggle={toggleSection}
             />
             {expandedSections.hpFlare && (
-              <TreeItem>
+              <TreeItem isDark={isDark}>
                 <div className="py-1.5 pr-2">
                   <UnitInput
                     label={t.component1 || 'Componente 1'}
@@ -280,9 +290,12 @@ export default function Sidebar({ onDataChange, activeView }) {
               label={t.lpFlare || 'LP Flare'}
               sectionKey="lpFlare"
               badge={{ text: totalLP.toLocaleString('pt-BR'), color: '#007acc' }}
+              isDark={isDark}
+              isExpanded={expandedSections.lpFlare}
+              onToggle={toggleSection}
             />
             {expandedSections.lpFlare && (
-              <TreeItem>
+              <TreeItem isDark={isDark}>
                 <div className="py-1.5 pr-2">
                   <UnitInput
                     label={t.component3 || 'Componente 3'}
@@ -315,11 +328,13 @@ export default function Sidebar({ onDataChange, activeView }) {
               label={t.totalHp || 'Total HP'}
               value={totalHP}
               color="#569cd6"
+              isDark={isDark}
             />
             <TotalBadge
               label={t.totalLp || 'Total LP'}
               value={totalLP}
               color="#569cd6"
+              isDark={isDark}
             />
             <div
               style={{
@@ -335,7 +350,7 @@ export default function Sidebar({ onDataChange, activeView }) {
               }}
             >
               <div className="flex items-center justify-between">
-                <span style={{ fontSize: 10, color: isDark ? '#858585' : '#858585', textTransform: 'uppercase', fontWeight: 600 }}>
+                <span style={{ fontSize: 10, color: '#858585', textTransform: 'uppercase', fontWeight: 600 }}>
                   {t.totalFlaringHpLp || 'Total Flaring'}
                 </span>
                 <Circle12Regular style={{
@@ -371,32 +386,19 @@ export default function Sidebar({ onDataChange, activeView }) {
 
   const renderEquipmentView = () => (
     <div className="flex flex-col h-full">
-      {/* Panel Header */}
-      <div
-        className="flex items-center justify-between flex-shrink-0"
-        style={{
-          padding: '8px 12px',
-          borderBottom: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
-        }}
-      >
-        <span style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          color: isDark ? '#bbbbbb' : '#616161',
-        }}>
-          {t.operationalData || 'Dados Operacionais'}
-        </span>
-        <MoreHorizontal16Regular style={{ color: '#858585', cursor: 'pointer' }} />
-      </div>
+      <PanelHeader title={t.operationalData || 'Dados Operacionais'} isDark={isDark} />
 
-      {/* Content */}
       <div className="flex-1 overflow-y-auto">
         {/* HP Compressor */}
-        <SectionHeader label={t.hpCompressor || 'Compressor HP'} sectionKey="hpCompressor" />
+        <SectionHeader
+          label={t.hpCompressor || 'Compressor HP'}
+          sectionKey="hpCompressor"
+          isDark={isDark}
+          isExpanded={expandedSections.hpCompressor}
+          onToggle={toggleSection}
+        />
         {expandedSections.hpCompressor && (
-          <TreeItem>
+          <TreeItem isDark={isDark}>
             <div className="py-1.5 pr-2">
               <UnitInput
                 label={t.flow || 'Vazão'}
@@ -431,9 +433,15 @@ export default function Sidebar({ onDataChange, activeView }) {
         )}
 
         {/* LP Compressor */}
-        <SectionHeader label={t.lpCompressor || 'Compressor LP'} sectionKey="lpCompressor" />
+        <SectionHeader
+          label={t.lpCompressor || 'Compressor LP'}
+          sectionKey="lpCompressor"
+          isDark={isDark}
+          isExpanded={expandedSections.lpCompressor}
+          onToggle={toggleSection}
+        />
         {expandedSections.lpCompressor && (
-          <TreeItem>
+          <TreeItem isDark={isDark}>
             <div className="py-1.5 pr-2">
               <UnitInput
                 label={t.flow || 'Vazão'}
@@ -468,9 +476,15 @@ export default function Sidebar({ onDataChange, activeView }) {
         )}
 
         {/* Blower */}
-        <SectionHeader label={t.blowerCompressor || 'Blower'} sectionKey="blower" />
+        <SectionHeader
+          label={t.blowerCompressor || 'Blower'}
+          sectionKey="blower"
+          isDark={isDark}
+          isExpanded={expandedSections.blower}
+          onToggle={toggleSection}
+        />
         {expandedSections.blower && (
-          <TreeItem>
+          <TreeItem isDark={isDark}>
             <div className="py-1.5 pr-2">
               <UnitInput
                 label={t.flow || 'Vazão'}
@@ -511,7 +525,7 @@ export default function Sidebar({ onDataChange, activeView }) {
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
-            color: isDark ? '#858585' : '#858585',
+            color: '#858585',
             marginBottom: 6,
           }}>
             Status
@@ -550,25 +564,7 @@ export default function Sidebar({ onDataChange, activeView }) {
 
   const renderParametersView = () => (
     <div className="flex flex-col h-full">
-      {/* Panel Header */}
-      <div
-        className="flex items-center justify-between flex-shrink-0"
-        style={{
-          padding: '8px 12px',
-          borderBottom: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
-        }}
-      >
-        <span style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          color: isDark ? '#bbbbbb' : '#616161',
-        }}>
-          {t.parameters || 'Parâmetros'}
-        </span>
-        <MoreHorizontal16Regular style={{ color: '#858585', cursor: 'pointer' }} />
-      </div>
+      <PanelHeader title={t.parameters || 'Parâmetros'} isDark={isDark} />
 
       <div className="flex-1 overflow-y-auto" style={{ padding: '8px 12px' }}>
         {/* System info */}
@@ -578,7 +574,7 @@ export default function Sidebar({ onDataChange, activeView }) {
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
-            color: isDark ? '#858585' : '#858585',
+            color: '#858585',
             marginBottom: 8,
           }}>
             FPSO Magnolia
@@ -598,7 +594,7 @@ export default function Sidebar({ onDataChange, activeView }) {
                 borderBottom: `1px solid ${isDark ? '#2d2d2d' : '#f0f0f0'}`,
               }}
             >
-              <span style={{ color: isDark ? '#858585' : '#858585' }}>{param.key}</span>
+              <span style={{ color: '#858585' }}>{param.key}</span>
               <span style={{
                 color: isDark ? '#4ec9b0' : '#007acc',
                 fontFamily: "'Cascadia Code', 'Fira Code', 'Consolas', monospace",
@@ -618,7 +614,7 @@ export default function Sidebar({ onDataChange, activeView }) {
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
-            color: isDark ? '#858585' : '#858585',
+            color: '#858585',
             marginBottom: 8,
           }}>
             {t.recoveryRate || 'Taxas de Recuperação'}
@@ -656,30 +652,12 @@ export default function Sidebar({ onDataChange, activeView }) {
 
   const renderSettingsView = () => (
     <div className="flex flex-col h-full">
-      {/* Panel Header */}
-      <div
-        className="flex items-center justify-between flex-shrink-0"
-        style={{
-          padding: '8px 12px',
-          borderBottom: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
-        }}
-      >
-        <span style={{
-          fontSize: 11,
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          color: isDark ? '#bbbbbb' : '#616161',
-        }}>
-          {t.settings || 'Configurações'}
-        </span>
-        <MoreHorizontal16Regular style={{ color: '#858585', cursor: 'pointer' }} />
-      </div>
+      <PanelHeader title={t.settings || 'Configurações'} isDark={isDark} />
 
       <div className="flex-1 overflow-y-auto" style={{ padding: '8px 12px' }}>
         <div style={{
           fontSize: 11,
-          color: isDark ? '#858585' : '#858585',
+          color: '#858585',
           marginBottom: 12,
         }}>
           Gas Recovery Simulator v1.0
