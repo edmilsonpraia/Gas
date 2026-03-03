@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Settings, Database, Activity, ChevronDown, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings24Regular, Database20Regular, PulseSquare20Regular, ChevronDown16Regular, ChevronRight16Regular } from '@fluentui/react-icons';
 import UnitInput from './UnitInput';
 import { UnitConverter } from '../utils/unitConverter';
 import { DataValidator } from '../utils/validators';
@@ -11,6 +11,15 @@ import { useLanguage } from '../contexts/LanguageContext';
 export default function Sidebar({ onDataChange }) {
   const { t } = useLanguage();
   const [useMonitoring, setUseMonitoring] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsDark(document.body.classList.contains('dark'));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
   const [expandedSections, setExpandedSections] = useState({
     hpFlare: true,
     lpFlare: true,
@@ -133,22 +142,31 @@ export default function Sidebar({ onDataChange }) {
 
   return (
     <div className="sidebar">
-      <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-primary-600 to-primary-700">
-        <div className="flex items-center gap-3 mb-2">
-          <Settings className="text-white" size={24} />
-          <h2 className="text-xl font-bold text-white">{t.parameters}</h2>
+      <div
+        className="px-3 py-2.5 transition-colors duration-300"
+        style={{
+          backgroundColor: isDark ? '#323233' : '#ffffff',
+          borderBottom: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <Settings24Regular className="w-5 h-5" style={{ color: isDark ? '#ffffff' : '#007acc' }} />
+          <h2 className="text-sm font-semibold" style={{ color: isDark ? '#ffffff' : '#1e1e1e' }}>{t.parameters}</h2>
         </div>
-        <p className="text-primary-100 text-sm">
-          {t.configureInputValues}
-        </p>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-3 space-y-3">
         {/* Toggle Sistema de Monitoramento */}
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex items-center gap-2">
-            <Database size={18} className="text-primary-600" />
-            <span className="text-sm font-medium">{t.monitoringSystem}</span>
+        <div
+          className="flex items-center justify-between p-2.5 rounded transition-colors duration-300"
+          style={{
+            backgroundColor: isDark ? '#1e1e1e' : '#f9fafb',
+            border: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
+          }}
+        >
+          <div className="flex items-center gap-1.5">
+            <Database20Regular className="text-vs-accent w-4 h-4" />
+            <span className="text-xs font-medium" style={{ color: isDark ? '#d4d4d4' : '#1f2937' }}>{t.monitoringSystem}</span>
           </div>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
@@ -157,27 +175,28 @@ export default function Sidebar({ onDataChange }) {
               onChange={(e) => setUseMonitoring(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+            <div className="w-9 h-5 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-vs-accent/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-vs-accent"></div>
           </label>
         </div>
 
         {useMonitoring && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-2 animate-fade-in">
             {/* HP FLARE */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="rounded overflow-hidden" style={{ border: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}` }}>
               <button
                 onClick={() => toggleSection('hpFlare')}
-                className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                className="w-full px-3 py-2 flex items-center justify-between transition-colors"
+                style={{ backgroundColor: isDark ? '#2d2d2d' : '#f9fafb', color: isDark ? '#d4d4d4' : '#1f2937' }}
               >
-                <div className="flex items-center gap-2">
-                  <Activity size={16} className="text-primary-600" />
-                  <span className="font-medium text-sm">{t.hpFlare}</span>
+                <div className="flex items-center gap-1.5">
+                  <PulseSquare20Regular className="text-vs-accent w-4 h-4" />
+                  <span className="font-medium text-xs">{t.hpFlare}</span>
                 </div>
-                {expandedSections.hpFlare ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {expandedSections.hpFlare ? <ChevronDown16Regular /> : <ChevronRight16Regular />}
               </button>
 
               {expandedSections.hpFlare && (
-                <div className="p-4 space-y-3">
+                <div className="p-2.5 space-y-2">
                   <UnitInput
                     label={t.component1}
                     unitType="volume_flow"
@@ -198,29 +217,30 @@ export default function Sidebar({ onDataChange }) {
                     helpText={t.secondHpSource}
                     onChange={(val) => validateAndSetHP('comp2', val)}
                   />
-                  <div className="mt-3 p-3 bg-primary-50 rounded-md border border-primary-200">
-                    <div className="text-xs text-primary-700 font-medium">{t.totalHp}</div>
-                    <div className="text-lg font-bold text-primary-900">{totalHP.toLocaleString('pt-BR')} Sm³/d</div>
+                  <div className="mt-2 p-2 bg-vs-accent/10 rounded border border-vs-accent/30">
+                    <div className="text-[10px] text-vs-accent font-medium">{t.totalHp}</div>
+                    <div className="text-sm font-bold text-vs-accent">{totalHP.toLocaleString('pt-BR')} Sm³/d</div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* LP FLARE */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="rounded overflow-hidden" style={{ border: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}` }}>
               <button
                 onClick={() => toggleSection('lpFlare')}
-                className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
+                className="w-full px-3 py-2 flex items-center justify-between transition-colors"
+                style={{ backgroundColor: isDark ? '#2d2d2d' : '#f9fafb', color: isDark ? '#d4d4d4' : '#1f2937' }}
               >
-                <div className="flex items-center gap-2">
-                  <Activity size={16} className="text-primary-600" />
-                  <span className="font-medium text-sm">{t.lpFlare}</span>
+                <div className="flex items-center gap-1.5">
+                  <PulseSquare20Regular className="text-vs-accent w-4 h-4" />
+                  <span className="font-medium text-xs">{t.lpFlare}</span>
                 </div>
-                {expandedSections.lpFlare ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                {expandedSections.lpFlare ? <ChevronDown16Regular /> : <ChevronRight16Regular />}
               </button>
 
               {expandedSections.lpFlare && (
-                <div className="p-4 space-y-3">
+                <div className="p-2.5 space-y-2">
                   <UnitInput
                     label={t.component3}
                     unitType="volume_flow"
@@ -241,23 +261,33 @@ export default function Sidebar({ onDataChange }) {
                     helpText={t.secondLpSource}
                     onChange={(val) => validateAndSetLP('comp4', val)}
                   />
-                  <div className="mt-3 p-3 bg-primary-50 rounded-md border border-primary-200">
-                    <div className="text-xs text-primary-700 font-medium">{t.totalLp}</div>
-                    <div className="text-lg font-bold text-primary-900">{totalLP.toLocaleString('pt-BR')} Sm³/d</div>
+                  <div className="mt-2 p-2 bg-vs-accent/10 rounded border border-vs-accent/30">
+                    <div className="text-[10px] text-vs-accent font-medium">{t.totalLp}</div>
+                    <div className="text-sm font-bold text-vs-accent">{totalLP.toLocaleString('pt-BR')} Sm³/d</div>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Total Flaring */}
-            <div className={`p-4 rounded-lg border-2 ${deltaFromLimit > 0 ? 'bg-red-50 border-red-300' : 'bg-green-50 border-green-300'}`}>
-              <div className="text-sm font-medium mb-2">
+            <div
+              className="p-2.5 rounded border-2"
+              style={{
+                backgroundColor: deltaFromLimit > 0
+                  ? (isDark ? 'rgba(244,71,71,0.1)' : '#fef2f2')
+                  : (isDark ? 'rgba(78,201,176,0.1)' : '#f0fdf4'),
+                borderColor: deltaFromLimit > 0
+                  ? (isDark ? 'rgba(244,71,71,0.4)' : '#fca5a5')
+                  : (isDark ? 'rgba(78,201,176,0.4)' : '#86efac'),
+              }}
+            >
+              <div className="text-xs font-medium mb-1" style={{ color: isDark ? '#d4d4d4' : '#1f2937' }}>
                 {t.totalFlaringHpLp}
               </div>
-              <div className="text-2xl font-bold mb-2">
+              <div className="text-lg font-bold mb-1" style={{ color: isDark ? '#d4d4d4' : '#1f2937' }}>
                 {totalFlaring.toLocaleString('pt-BR')} Sm³/d
               </div>
-              <div className={`text-xs ${deltaFromLimit > 0 ? 'text-red-700' : 'text-green-700'}`}>
+              <div className="text-[10px]" style={{ color: deltaFromLimit > 0 ? '#f44747' : '#4ec9b0' }}>
                 {deltaFromLimit > 0 ? '⚠️ ' : '✅ '}
                 {Math.abs(deltaFromLimit).toLocaleString('pt-BR')} Sm³/d
                 {deltaFromLimit > 0 ? t.aboveLimit : t.belowLimit}
@@ -267,21 +297,22 @@ export default function Sidebar({ onDataChange }) {
         )}
 
         {/* Compressores */}
-        <div className="pt-4 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4">{t.operationalData}</h3>
+        <div className="pt-2" style={{ borderTop: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}` }}>
+          <h3 className="text-xs font-semibold mb-2" style={{ color: isDark ? '#cccccc' : '#374151' }}>{t.operationalData}</h3>
 
           {/* Compressor HP */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden mb-3">
+          <div className="rounded overflow-hidden mb-2" style={{ border: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}` }}>
             <button
               onClick={() => toggleSection('hpCompressor')}
-              className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
+              className="w-full px-3 py-2 flex items-center justify-between transition-colors"
+              style={{ backgroundColor: isDark ? '#2d2d2d' : '#f9fafb', color: isDark ? '#d4d4d4' : '#1f2937' }}
             >
-              <span className="font-medium text-sm">{t.hpCompressor}</span>
-              {expandedSections.hpCompressor ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              <span className="font-medium text-xs">{t.hpCompressor}</span>
+              {expandedSections.hpCompressor ? <ChevronDown16Regular /> : <ChevronRight16Regular />}
             </button>
 
             {expandedSections.hpCompressor && (
-              <div className="p-4 space-y-3">
+              <div className="p-2.5 space-y-2">
                 <UnitInput
                   label={t.flow}
                   unitType="volume_flow"
@@ -312,17 +343,18 @@ export default function Sidebar({ onDataChange }) {
           </div>
 
           {/* Compressor LP */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden mb-3">
+          <div className="rounded overflow-hidden mb-2" style={{ border: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}` }}>
             <button
               onClick={() => toggleSection('lpCompressor')}
-              className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
+              className="w-full px-3 py-2 flex items-center justify-between transition-colors"
+              style={{ backgroundColor: isDark ? '#2d2d2d' : '#f9fafb', color: isDark ? '#d4d4d4' : '#1f2937' }}
             >
-              <span className="font-medium text-sm">{t.lpCompressor}</span>
-              {expandedSections.lpCompressor ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              <span className="font-medium text-xs">{t.lpCompressor}</span>
+              {expandedSections.lpCompressor ? <ChevronDown16Regular /> : <ChevronRight16Regular />}
             </button>
 
             {expandedSections.lpCompressor && (
-              <div className="p-4 space-y-3">
+              <div className="p-2.5 space-y-2">
                 <UnitInput
                   label={t.flow}
                   unitType="volume_flow"
@@ -353,17 +385,18 @@ export default function Sidebar({ onDataChange }) {
           </div>
 
           {/* Blower */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="rounded overflow-hidden" style={{ border: `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}` }}>
             <button
               onClick={() => toggleSection('blower')}
-              className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between hover:bg-gray-100 transition-colors"
+              className="w-full px-3 py-2 flex items-center justify-between transition-colors"
+              style={{ backgroundColor: isDark ? '#2d2d2d' : '#f9fafb', color: isDark ? '#d4d4d4' : '#1f2937' }}
             >
-              <span className="font-medium text-sm">{t.blowerCompressor}</span>
-              {expandedSections.blower ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              <span className="font-medium text-xs">{t.blowerCompressor}</span>
+              {expandedSections.blower ? <ChevronDown16Regular /> : <ChevronRight16Regular />}
             </button>
 
             {expandedSections.blower && (
-              <div className="p-4 space-y-3">
+              <div className="p-2.5 space-y-2">
                 <UnitInput
                   label={t.flow}
                   unitType="volume_flow"

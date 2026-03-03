@@ -20,9 +20,9 @@ export function FlowComparisonChart({ data }) {
       ],
       type: 'bar',
       marker: {
-        color: ['#dc2626', '#ef4444', '#f87171', '#fca5a5'],
+        color: ['#007acc', '#569cd6', '#9cdcfe', '#b3d9ff'],
         line: {
-          color: '#991b1b',
+          color: '#005a9e',
           width: 1.5
         }
       },
@@ -82,7 +82,7 @@ export function HPLPDistributionChart({ data }) {
       labels: [t.hpFlare, t.lpFlare],
       type: 'pie',
       marker: {
-        colors: ['#dc2626', '#f87171']
+        colors: ['#007acc', '#569cd6']
       },
       textinfo: 'label+percent+value',
       texttemplate: `<b>%{label}</b><br>%{value:,.0f} ${t.sm3d}<br>(%{percent})`,
@@ -139,8 +139,8 @@ export function PressureTempChart({ data }) {
       type: 'bar',
       yaxis: 'y',
       marker: {
-        color: '#3b82f6',
-        line: { color: '#1e40af', width: 1.5 }
+        color: '#007acc',
+        line: { color: '#005a9e', width: 1.5 }
       },
       hovertemplate: `<b>%{x}</b><br>${t.pressure}: %{y:.2f} ${t.bar}<extra></extra>`
     },
@@ -155,8 +155,8 @@ export function PressureTempChart({ data }) {
       type: 'scatter',
       mode: 'lines+markers',
       yaxis: 'y2',
-      marker: { color: '#ef4444', size: 12, line: { color: '#991b1b', width: 2 } },
-      line: { color: '#ef4444', width: 3 },
+      marker: { color: '#ce9178', size: 12, line: { color: '#a06a50', width: 2 } },
+      line: { color: '#ce9178', width: 3 },
       hovertemplate: `<b>%{x}</b><br>${t.temperature}: %{y:.1f} ${t.celsius}<extra></extra>`
     }
   ];
@@ -222,9 +222,9 @@ export function CompressorFlowChart({ data }) {
       ],
       type: 'bar',
       marker: {
-        color: ['#dc2626', '#f87171', '#fca5a5'],
+        color: ['#007acc', '#569cd6', '#9cdcfe'],
         line: {
-          color: '#991b1b',
+          color: '#005a9e',
           width: 1.5
         }
       },
@@ -318,8 +318,8 @@ export function TimeSeriesChart({ data }) {
       name: t.historical,
       type: 'scatter',
       mode: 'lines+markers',
-      line: { color: '#3b82f6', width: 3 },
-      marker: { size: 6, color: '#3b82f6' },
+      line: { color: '#007acc', width: 3 },
+      marker: { size: 6, color: '#007acc' },
       hovertemplate: '<b>%{x}</b><br>%{y:,.0f} Sm³/d<extra></extra>'
     },
     {
@@ -328,8 +328,8 @@ export function TimeSeriesChart({ data }) {
       name: t.projection,
       type: 'scatter',
       mode: 'lines+markers',
-      line: { color: '#10b981', width: 3, dash: 'dash' },
-      marker: { size: 6, color: '#10b981' },
+      line: { color: '#4ec9b0', width: 3, dash: 'dash' },
+      marker: { size: 6, color: '#4ec9b0' },
       hovertemplate: '<b>%{x}</b><br>%{y:,.0f} Sm³/d<extra></extra>'
     },
     {
@@ -338,7 +338,7 @@ export function TimeSeriesChart({ data }) {
       name: t.limit61k,
       type: 'scatter',
       mode: 'lines',
-      line: { color: '#ef4444', width: 2, dash: 'dot' },
+      line: { color: '#f44747', width: 2, dash: 'dot' },
       hovertemplate: `<b>${t.limit}</b><br>61,000 Sm³/d<extra></extra>`
     }
   ];
@@ -414,9 +414,9 @@ export function WaterfallChart({ data }) {
           dash: 'dot'
         }
       },
-      decreasing: { marker: { color: '#10b981' } },
-      increasing: { marker: { color: '#dc2626' } },
-      totals: { marker: { color: '#3b82f6' } },
+      decreasing: { marker: { color: '#4ec9b0' } },
+      increasing: { marker: { color: '#f44747' } },
+      totals: { marker: { color: '#007acc' } },
       hovertemplate: '<b>%{x}</b><br>%{y:,.0f} Sm³/d<extra></extra>'
     }
   ];
@@ -490,9 +490,9 @@ export function PerformanceHeatmap({ data }) {
       y: parametros,
       type: 'heatmap',
       colorscale: [
-        [0, '#10b981'],
-        [0.5, '#fbbf24'],
-        [1, '#ef4444']
+        [0, '#4ec9b0'],
+        [0.5, '#dcdcaa'],
+        [1, '#f44747']
       ],
       hovertemplate: '<b>%{y}</b><br>%{x}<br>%{z:.1f}%<extra></extra>',
       colorbar: {
@@ -557,8 +557,8 @@ export function EmissionsComparisonChart({ data }) {
       name: t.currentSystem,
       type: 'bar',
       marker: {
-        color: '#dc2626',
-        line: { color: '#991b1b', width: 2 }
+        color: '#f44747',
+        line: { color: '#d73a3a', width: 2 }
       },
       text: [
         `${cenarioAtual.emissoes_lp_flare.toFixed(0)}`,
@@ -580,8 +580,8 @@ export function EmissionsComparisonChart({ data }) {
       name: t.proposedSystem,
       type: 'bar',
       marker: {
-        color: '#10b981',
-        line: { color: '#047857', width: 2 }
+        color: '#4ec9b0',
+        line: { color: '#3dba9e', width: 2 }
       },
       text: [
         `${cenarioProposto.emissoes_lp_flare.toFixed(0)}`,
@@ -656,8 +656,8 @@ export function EmissionsReductionChart({ data }) {
       y: [reducaoLP, reducaoHP, reducaoHull],
       type: 'bar',
       marker: {
-        color: ['#10b981', '#059669', '#047857'],
-        line: { color: '#065f46', width: 2 }
+        color: ['#4ec9b0', '#3dba9e', '#2ea88c'],
+        line: { color: '#228070', width: 2 }
       },
       text: [
         `${reducaoLP.toFixed(0)} tCO₂eq<br>(${((reducaoLP/cenarioAtual.emissoes_lp_flare)*100).toFixed(1)}%)`,
@@ -697,7 +697,7 @@ export function EmissionsReductionChart({ data }) {
         y: 1.1,
         xanchor: 'center',
         showarrow: false,
-        font: { size: 14, color: '#047857' }
+        font: { size: 14, color: '#4ec9b0' }
       }
     ]
   };
@@ -742,14 +742,14 @@ export function GasFlowSankeyChart({ data }) {
           t.recoveredGasNode
         ],
         color: [
-          '#3b82f6', // Gás Produzido
-          '#f87171', // LP Flare
-          '#dc2626', // HP Flare
-          '#fca5a5', // Hull Vent
-          '#ef4444', // Sistema Atual
-          '#10b981', // Sistema de Recuperação
-          '#fbbf24', // Flaring Residual
-          '#059669'  // Gás Recuperado
+          '#007acc', // Gás Produzido
+          '#569cd6', // LP Flare
+          '#f44747', // HP Flare
+          '#9cdcfe', // Hull Vent
+          '#f44747', // Sistema Atual
+          '#4ec9b0', // Sistema de Recuperação
+          '#dcdcaa', // Flaring Residual
+          '#4ec9b0'  // Gás Recuperado
         ]
       },
       link: {
@@ -766,14 +766,14 @@ export function GasFlowSankeyChart({ data }) {
           vazaoRecuperada
         ],
         color: [
-          'rgba(248, 113, 113, 0.4)',
-          'rgba(220, 38, 38, 0.4)',
-          'rgba(252, 165, 165, 0.4)',
-          'rgba(239, 68, 68, 0.4)',
-          'rgba(239, 68, 68, 0.4)',
-          'rgba(239, 68, 68, 0.4)',
-          'rgba(251, 191, 36, 0.4)',
-          'rgba(5, 150, 105, 0.4)'
+          'rgba(86, 156, 214, 0.4)',
+          'rgba(244, 71, 71, 0.4)',
+          'rgba(156, 220, 254, 0.4)',
+          'rgba(244, 71, 71, 0.4)',
+          'rgba(244, 71, 71, 0.4)',
+          'rgba(244, 71, 71, 0.4)',
+          'rgba(220, 220, 170, 0.4)',
+          'rgba(78, 201, 176, 0.4)'
         ]
       }
     }
@@ -829,7 +829,7 @@ export function EnvironmentalImpactChart({ data }) {
       y: [carrosAtual, arvoresAtual, residenciasAtual],
       name: t.currentSystem,
       type: 'bar',
-      marker: { color: '#dc2626', line: { color: '#991b1b', width: 2 } },
+      marker: { color: '#f44747', line: { color: '#d73a3a', width: 2 } },
       text: [
         `${carrosAtual.toFixed(0)}`,
         `${arvoresAtual.toFixed(0)}`,
@@ -843,7 +843,7 @@ export function EnvironmentalImpactChart({ data }) {
       y: [carrosProposto, arvoresProposto, residenciasProposto],
       name: t.proposedSystem,
       type: 'bar',
-      marker: { color: '#10b981', line: { color: '#047857', width: 2 } },
+      marker: { color: '#4ec9b0', line: { color: '#3dba9e', width: 2 } },
       text: [
         `${carrosProposto.toFixed(0)}`,
         `${arvoresProposto.toFixed(0)}`,
@@ -917,22 +917,22 @@ export function SystemEfficiencyGauge({ data }) {
       delta: {
         reference: 0,
         suffix: '%',
-        increasing: { color: '#10b981' }
+        increasing: { color: '#4ec9b0' }
       },
       gauge: {
         axis: { range: [0, 100], tickwidth: 2, tickcolor: '#334155' },
-        bar: { color: '#10b981', thickness: 0.8 },
+        bar: { color: '#4ec9b0', thickness: 0.8 },
         bgcolor: 'white',
         borderwidth: 2,
         bordercolor: '#cbd5e1',
         steps: [
-          { range: [0, 30], color: '#fecaca' },
-          { range: [30, 60], color: '#fde68a' },
-          { range: [60, 80], color: '#bfdbfe' },
-          { range: [80, 100], color: '#bbf7d0' }
+          { range: [0, 30], color: '#f44747' },
+          { range: [30, 60], color: '#dcdcaa' },
+          { range: [60, 80], color: '#569cd6' },
+          { range: [80, 100], color: '#4ec9b0' }
         ],
         threshold: {
-          line: { color: '#dc2626', width: 4 },
+          line: { color: '#f44747', width: 4 },
           thickness: 0.75,
           value: 85
         }
@@ -1010,16 +1010,16 @@ export function EmissionsBreakdownSunburst({ data }) {
       ],
       marker: {
         colors: [
-          '#3b82f6',
-          '#f87171',
-          '#dc2626',
-          '#fca5a5',
-          '#fecaca',
-          '#fee2e2',
-          '#fca5a5',
-          '#fecdd3',
-          '#fed7aa',
-          '#fef3c7'
+          '#007acc',
+          '#4ec9b0',
+          '#f44747',
+          '#dcdcaa',
+          '#569cd6',
+          '#ce9178',
+          '#c586c0',
+          '#9cdcfe',
+          '#b3d9ff',
+          '#d4d4d4'
         ]
       },
       branchvalues: 'total',

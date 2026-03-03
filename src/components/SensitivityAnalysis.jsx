@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import Plot from 'react-plotly.js';
-import { TrendingUp, Activity } from 'lucide-react';
+import { ArrowTrendingRegular, PulseSquare24Regular } from '@fluentui/react-icons';
 import { EmissionCalculator, EconomicCalculator } from '../utils/calculations';
 import { NumberFormatter } from '../utils/unitConverter';
 
@@ -217,9 +217,9 @@ export default function SensitivityAnalysis({ data }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="card bg-gradient-to-r from-purple-50 to-pink-50">
+      <div className="card bg-white border-l-2 border-l-vs-keyword">
         <div className="flex items-center gap-3 mb-2">
-          <Activity size={32} className="text-purple-600" />
+          <PulseSquare24Regular className="text-purple-600 text-3xl" />
           <h2 className="text-2xl font-bold text-gray-900">Análise de Sensibilidade</h2>
         </div>
         <p className="text-gray-600">
@@ -308,7 +308,7 @@ export default function SensitivityAnalysis({ data }) {
       {/* Gráfico Tornado */}
       <div className="card">
         <h3 className="card-header flex items-center gap-2">
-          <TrendingUp size={24} className="text-primary-600" />
+          <ArrowTrendingRegular className="text-primary-600 text-2xl" />
           Análise Tornado - Impacto de Todos os Parâmetros
         </h3>
         <p className="text-sm text-gray-600 mb-4">
@@ -364,7 +364,7 @@ export default function SensitivityAnalysis({ data }) {
 
           <div className="overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-gradient-to-r from-purple-100 to-pink-100">
+              <thead className="bg-white border-b-2 border-b-vs-keyword">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">
                     {sensitivity.config?.label}
@@ -428,7 +428,7 @@ export default function SensitivityAnalysis({ data }) {
       )}
 
       {/* Insights */}
-      <div className="card bg-gradient-to-r from-blue-50 to-cyan-50">
+      <div className="card bg-white border-l-2 border-l-vs-info">
         <h3 className="font-bold text-gray-900 mb-3">💡 Insights da Análise</h3>
         <ul className="space-y-2 text-sm text-gray-700">
           <li>✅ <strong>Parâmetros mais Críticos:</strong> Use o gráfico Tornado para identificar quais variáveis têm maior impacto no VPL</li>

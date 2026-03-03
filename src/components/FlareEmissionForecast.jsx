@@ -1,803 +1,327 @@
 import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
-import { Activity, AlertCircle, TreeDeciduous } from 'lucide-react';
+import { PulseSquare24Regular, ErrorCircle20Regular, LeafTwo24Regular, PulseSquare20Regular } from '@fluentui/react-icons';
 import { useLanguage } from '../contexts/LanguageContext';
 
-/**
- * Componente de Previsão de Queima de Gás usando RF e KNN
- * Implementa Random Forest e K-Nearest Neighbors para prever emissões futuras
- * Cenário Atual vs Cenário Proposto
- */
+/* VS Code theme hook */
+function useTheme() {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const check = () => setIsDark(document.body.classList.contains('dark'));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+  return {
+    isDark,
+    plotBg:  isDark ? '#1e1e1e' : '#ffffff',
+    paperBg: isDark ? '#252526' : '#ffffff',
+    grid:    isDark ? '#333333' : '#e5e7eb',
+    txt:     isDark ? '#d4d4d4' : '#1f2937',
+    txtS:    isDark ? '#858585' : '#6b7280',
+    border:  isDark ? '#3e3e3e' : '#e5e7eb',
+    font:    { family: 'Consolas, Monaco, monospace', color: isDark ? '#d4d4d4' : '#1f2937' },
+    accent:  '#007acc',
+    red: '#f44747', green: '#4ec9b0', blue: '#569cd6', yellow: '#dcdcaa',
+  };
+}
+
 export default function FlareEmissionForecast({ data }) {
   const { t } = useLanguage();
+  const T = useTheme();
   const [predictions, setPredictions] = useState({ atual: null, proposto: null });
   const [isTraining, setIsTraining] = useState(false);
   const [metrics, setMetrics] = useState({ atual: null, proposto: null });
   const [error, setError] = useState(null);
-  const [selectedModel, setSelectedModel] = useState('rf'); // 'rf' ou 'knn'
+  const [selectedModel, setSelectedModel] = useState('rf');
 
-  /**
-   * Gera dados históricos sintéticos de queima de gás
-   * Baseado nos dados atuais com variação realística
-   */
   const generateHistoricalData = (months = 48) => {
     const currentFlaring = (data.monitoring?.totals?.totalFlaring || 67900);
     const historical = [];
-
-    // Gerar dados históricos com tendência, sazonalidade e variações operacionais
     for (let i = 0; i < months; i++) {
-      // Tendência: leve aumento ao longo do tempo (operação sem melhorias)
       const trend = currentFlaring * (1 + (i * 0.0008));
-
-      // Sazonalidade: variação mensal realística (verão vs inverno)
       const seasonal = Math.sin((i / 12) * 2 * Math.PI) * currentFlaring * 0.08;
-
-      // Variação operacional: simulando paradas e partidas
       const operational = Math.sin((i / 3) * 2 * Math.PI) * currentFlaring * 0.03;
-
-      // Ruído aleatório: variações diárias agregadas
       const noise = (Math.random() - 0.5) * currentFlaring * 0.04;
-
-      const value = trend + seasonal + operational + noise;
       historical.push({
         month: i - months + 1,
-        flaring: Math.max(value * 0.85, 0), // Nunca negativo
+        flaring: Math.max((trend + seasonal + operational + noise) * 0.85, 0),
         date: new Date(new Date().setMonth(new Date().getMonth() - (months - i))),
-        // Features adicionais para os modelos
         monthOfYear: (new Date().getMonth() - (months - i) + 12) % 12,
-        trend: i / months
+        trend: i / months,
       });
     }
-
     return historical;
   };
 
-  /**
-   * ════════════════════════════════════════════════════════════════════
-   * RANDOM FOREST IMPLEMENTATION
-   * ════════════════════════════════════════════════════════════════════
-   */
-
-  /**
-   * Árvore de Decisão simples para Random Forest
-   */
   class DecisionTree {
-    constructor(maxDepth = 5, minSamplesSplit = 2) {
-      this.maxDepth = maxDepth;
-      this.minSamplesSplit = minSamplesSplit;
-      this.tree = null;
-    }
-
-    fit(X, y) {
-      this.tree = this.buildTree(X, y, 0);
-    }
-
-    buildTree(X, y, depth) {
+    constructor(maxDepth = 5, minSamples = 2) { this.maxDepth = maxDepth; this.minSamples = minSamples; this.tree = null; }
+    fit(X, y) { this.tree = this._build(X, y, 0); }
+    _build(X, y, d) {
       const n = X.length;
-
-      if (n < this.minSamplesSplit || depth >= this.maxDepth) {
-        return { value: y.reduce((a, b) => a + b, 0) / n };
-      }
-
-      const { featureIdx, threshold } = this.findBestSplit(X, y);
-
-      if (featureIdx === null) {
-        return { value: y.reduce((a, b) => a + b, 0) / n };
-      }
-
-      const { leftX, leftY, rightX, rightY } = this.split(X, y, featureIdx, threshold);
-
-      return {
-        featureIdx,
-        threshold,
-        left: this.buildTree(leftX, leftY, depth + 1),
-        right: this.buildTree(rightX, rightY, depth + 1)
-      };
+      if (n < this.minSamples || d >= this.maxDepth) return { value: y.reduce((a, b) => a + b, 0) / n };
+      const { fi, th } = this._bestSplit(X, y);
+      if (fi === null) return { value: y.reduce((a, b) => a + b, 0) / n };
+      const { lX, lY, rX, rY } = this._split(X, y, fi, th);
+      return { fi, th, left: this._build(lX, lY, d + 1), right: this._build(rX, rY, d + 1) };
     }
-
-    findBestSplit(X, y) {
-      let bestGain = -Infinity;
-      let bestFeature = null;
-      let bestThreshold = null;
-
-      const numFeatures = X[0].length;
-
-      for (let featureIdx = 0; featureIdx < numFeatures; featureIdx++) {
-        const values = X.map(row => row[featureIdx]);
-        const uniqueValues = [...new Set(values)].sort((a, b) => a - b);
-
-        for (let i = 0; i < uniqueValues.length - 1; i++) {
-          const threshold = (uniqueValues[i] + uniqueValues[i + 1]) / 2;
-          const gain = this.informationGain(X, y, featureIdx, threshold);
-
-          if (gain > bestGain) {
-            bestGain = gain;
-            bestFeature = featureIdx;
-            bestThreshold = threshold;
-          }
+    _bestSplit(X, y) {
+      let bg = -Infinity, bf = null, bt = null;
+      for (let f = 0; f < X[0].length; f++) {
+        const vals = [...new Set(X.map(r => r[f]))].sort((a, b) => a - b);
+        for (let i = 0; i < vals.length - 1; i++) {
+          const th = (vals[i] + vals[i + 1]) / 2, g = this._gain(X, y, f, th);
+          if (g > bg) { bg = g; bf = f; bt = th; }
         }
       }
-
-      return { featureIdx: bestFeature, threshold: bestThreshold };
+      return { fi: bf, th: bt };
     }
-
-    informationGain(X, y, featureIdx, threshold) {
-      const { leftY, rightY } = this.split(X, y, featureIdx, threshold);
-
-      if (leftY.length === 0 || rightY.length === 0) return 0;
-
-      const n = y.length;
-      const parentVariance = this.variance(y);
-      const leftVariance = this.variance(leftY);
-      const rightVariance = this.variance(rightY);
-
-      const weightedVariance = (leftY.length / n) * leftVariance + (rightY.length / n) * rightVariance;
-
-      return parentVariance - weightedVariance;
+    _gain(X, y, fi, th) {
+      const { lY, rY } = this._split(X, y, fi, th);
+      if (!lY.length || !rY.length) return 0;
+      const v = a => { const m = a.reduce((s, v) => s + v, 0) / a.length; return a.reduce((s, v) => s + (v - m) ** 2, 0) / a.length; };
+      return v(y) - (lY.length / y.length) * v(lY) - (rY.length / y.length) * v(rY);
     }
-
-    variance(values) {
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      return values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+    _split(X, y, fi, th) {
+      const lX = [], lY = [], rX = [], rY = [];
+      X.forEach((r, i) => { if (r[fi] <= th) { lX.push(r); lY.push(y[i]); } else { rX.push(r); rY.push(y[i]); } });
+      return { lX, lY, rX, rY };
     }
-
-    split(X, y, featureIdx, threshold) {
-      const leftX = [], leftY = [], rightX = [], rightY = [];
-
-      for (let i = 0; i < X.length; i++) {
-        if (X[i][featureIdx] <= threshold) {
-          leftX.push(X[i]);
-          leftY.push(y[i]);
-        } else {
-          rightX.push(X[i]);
-          rightY.push(y[i]);
-        }
-      }
-
-      return { leftX, leftY, rightX, rightY };
-    }
-
-    predict(x) {
-      return this.traverseTree(x, this.tree);
-    }
-
-    traverseTree(x, node) {
-      if (node.value !== undefined) {
-        return node.value;
-      }
-
-      if (x[node.featureIdx] <= node.threshold) {
-        return this.traverseTree(x, node.left);
-      } else {
-        return this.traverseTree(x, node.right);
-      }
-    }
+    predict(x) { return this._traverse(x, this.tree); }
+    _traverse(x, n) { return n.value !== undefined ? n.value : x[n.fi] <= n.th ? this._traverse(x, n.left) : this._traverse(x, n.right); }
   }
 
-  /**
-   * Random Forest Regressor
-   */
   class RandomForest {
-    constructor(numTrees = 10, maxDepth = 5) {
-      this.numTrees = numTrees;
-      this.maxDepth = maxDepth;
-      this.trees = [];
-    }
-
+    constructor(nTrees = 10, maxDepth = 5) { this.nTrees = nTrees; this.maxDepth = maxDepth; this.trees = []; }
     fit(X, y) {
       this.trees = [];
-
-      for (let i = 0; i < this.numTrees; i++) {
-        const { bootX, bootY } = this.bootstrap(X, y);
+      for (let i = 0; i < this.nTrees; i++) {
+        const n = X.length, bX = [], bY = [];
+        for (let j = 0; j < n; j++) { const idx = Math.floor(Math.random() * n); bX.push(X[idx]); bY.push(y[idx]); }
         const tree = new DecisionTree(this.maxDepth);
-        tree.fit(bootX, bootY);
+        tree.fit(bX, bY);
         this.trees.push(tree);
       }
     }
-
-    bootstrap(X, y) {
-      const n = X.length;
-      const bootX = [];
-      const bootY = [];
-
-      for (let i = 0; i < n; i++) {
-        const idx = Math.floor(Math.random() * n);
-        bootX.push(X[idx]);
-        bootY.push(y[idx]);
-      }
-
-      return { bootX, bootY };
-    }
-
-    predict(x) {
-      const predictions = this.trees.map(tree => tree.predict(x));
-      return predictions.reduce((a, b) => a + b, 0) / predictions.length;
-    }
+    predict(x) { return this.trees.reduce((s, t) => s + t.predict(x), 0) / this.trees.length; }
   }
-
-  /**
-   * ════════════════════════════════════════════════════════════════════
-   * K-NEAREST NEIGHBORS IMPLEMENTATION
-   * ════════════════════════════════════════════════════════════════════
-   */
 
   class KNN {
-    constructor(k = 5) {
-      this.k = k;
-      this.X = null;
-      this.y = null;
-    }
-
-    fit(X, y) {
-      this.X = X;
-      this.y = y;
-    }
-
-    euclideanDistance(a, b) {
-      return Math.sqrt(
-        a.reduce((sum, val, i) => sum + Math.pow(val - b[i], 2), 0)
-      );
-    }
-
+    constructor(k = 5) { this.k = k; this.X = null; this.y = null; }
+    fit(X, y) { this.X = X; this.y = y; }
     predict(x) {
-      const distances = this.X.map((sample, idx) => ({
-        distance: this.euclideanDistance(x, sample),
-        value: this.y[idx]
-      }));
-
-      distances.sort((a, b) => a.distance - b.distance);
-
-      const kNearest = distances.slice(0, this.k);
-      const prediction = kNearest.reduce((sum, neighbor) => sum + neighbor.value, 0) / this.k;
-
-      return prediction;
+      const d = this.X.map((s, i) => ({ d: Math.sqrt(s.reduce((sum, v, j) => sum + (v - x[j]) ** 2, 0)), v: this.y[i] }));
+      d.sort((a, b) => a.d - b.d);
+      return d.slice(0, this.k).reduce((s, n) => s + n.v, 0) / this.k;
     }
   }
 
-  /**
-   * ════════════════════════════════════════════════════════════════════
-   * TREINAMENTO E PREVISÃO
-   * ════════════════════════════════════════════════════════════════════
-   */
-
-  /**
-   * Prepara features e targets para treinamento
-   */
-  const prepareData = (historicalData, lookback = 3) => {
-    const X = [];
-    const y = [];
-
-    for (let i = lookback; i < historicalData.length; i++) {
-      const features = [];
-
-      // Últimos valores de queima (lookback)
-      for (let j = 0; j < lookback; j++) {
-        features.push(historicalData[i - lookback + j].flaring);
-      }
-
-      // Média móvel dos últimos 3 meses
-      const recentValues = historicalData.slice(i - lookback, i).map(d => d.flaring);
-      const movingAvg = recentValues.reduce((a, b) => a + b, 0) / recentValues.length;
-      features.push(movingAvg);
-
-      // Diferença entre valor atual e média móvel
-      const currentValue = historicalData[i - 1].flaring;
-      features.push(currentValue - movingAvg);
-
-      // Mês do ano (componente sazonal)
-      features.push(historicalData[i].monthOfYear / 11); // Normalizado entre 0-1
-
-      // Tendência temporal normalizada
-      features.push(historicalData[i].trend);
-
-      X.push(features);
-      y.push(historicalData[i].flaring);
+  const prepareData = (hist, lb = 3) => {
+    const X = [], y = [];
+    for (let i = lb; i < hist.length; i++) {
+      const recent = hist.slice(i - lb, i).map(d => d.flaring);
+      const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+      X.push([...recent, avg, recent[recent.length - 1] - avg, hist[i].monthOfYear / 11, hist[i].trend]);
+      y.push(hist[i].flaring);
     }
-
     return { X, y };
   };
 
-  /**
-   * Normaliza features
-   */
-  const normalizeFeatures = (X) => {
-    const numFeatures = X[0].length;
-    const means = [];
-    const stds = [];
-
-    for (let j = 0; j < numFeatures; j++) {
-      const values = X.map(row => row[j]);
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const std = Math.sqrt(
-        values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
-      );
-
-      means.push(mean);
-      stds.push(std || 1);
+  const normalize = (X) => {
+    const nf = X[0].length, means = [], stds = [];
+    for (let j = 0; j < nf; j++) {
+      const vals = X.map(r => r[j]), mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const std = Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / vals.length);
+      means.push(mean); stds.push(std || 1);
     }
-
-    const normalizedX = X.map(row =>
-      row.map((val, j) => (val - means[j]) / stds[j])
-    );
-
-    return { normalizedX, means, stds };
+    return { nX: X.map(r => r.map((v, j) => (v - means[j]) / stds[j])), means, stds };
   };
 
-  /**
-   * Calcula métricas de avaliação
-   */
-  const calculateMetrics = (yTrue, yPred) => {
-    const n = yTrue.length;
-    let mae = 0;
-    let mse = 0;
-    let r2Num = 0;
-    let r2Den = 0;
-
-    const yMean = yTrue.reduce((a, b) => a + b, 0) / n;
-
-    for (let i = 0; i < n; i++) {
-      const error = Math.abs(yTrue[i] - yPred[i]);
-      mae += error;
-      mse += error * error;
-      r2Num += Math.pow(yTrue[i] - yPred[i], 2);
-      r2Den += Math.pow(yTrue[i] - yMean, 2);
-    }
-
-    mae /= n;
-    mse /= n;
-    const rmse = Math.sqrt(mse);
-    const r2 = 1 - (r2Num / (r2Den || 1));
-
-    return { mae, rmse, r2 };
+  const calcMetrics = (yT, yP) => {
+    const n = yT.length, yM = yT.reduce((a, b) => a + b, 0) / n;
+    let mae = 0, mse = 0, r2N = 0, r2D = 0;
+    for (let i = 0; i < n; i++) { const e = Math.abs(yT[i] - yP[i]); mae += e; mse += e * e; r2N += (yT[i] - yP[i]) ** 2; r2D += (yT[i] - yM) ** 2; }
+    return { mae: mae / n, rmse: Math.sqrt(mse / n), r2: 1 - r2N / (r2D || 1) };
   };
 
-  /**
-   * Treina modelos e gera previsões para Sistema Atual e Sistema Proposto
-   */
-  const trainModels = async (historicalData) => {
+  const trainModels = async (hist) => {
     try {
-      setIsTraining(true);
-      setError(null);
+      setIsTraining(true); setError(null);
+      const { X, y } = prepareData(hist, 3);
+      const { nX, means, stds } = normalize(X);
+      const split = Math.floor(X.length * 0.7);
+      const xTr = nX.slice(0, split), yTr = y.slice(0, split), xV = nX.slice(split), yV = y.slice(split);
+      let model, mName;
+      if (selectedModel === 'knn') { model = new KNN(3); mName = 'K-Nearest Neighbors'; }
+      else { model = new RandomForest(10, 4); mName = 'Random Forest'; }
+      model.fit(xTr, yTr);
+      const vP = xV.map(x => model.predict(x));
+      const mm = { ...calcMetrics(yV, vP), ...(selectedModel === 'rf' ? { numTrees: 10, maxDepth: 4 } : { k: 3 }) };
 
-      const lookback = 3;
-      const { X, y } = prepareData(historicalData, lookback);
-
-      // Normalizar features
-      const { normalizedX, means, stds } = normalizeFeatures(X);
-
-      // Split treino/validação (70/30 para melhor validação)
-      const splitIdx = Math.floor(X.length * 0.7);
-      const XTrain = normalizedX.slice(0, splitIdx);
-      const yTrain = y.slice(0, splitIdx);
-      const XVal = normalizedX.slice(splitIdx);
-      const yVal = y.slice(splitIdx);
-
-      // Escolher modelo baseado em selectedModel
-      let model;
-      let modelMetrics;
-      let modelName;
-
-      if (selectedModel === 'knn') {
-        // Treinar KNN com k reduzido
-        model = new KNN(3);
-        model.fit(XTrain, yTrain);
-        const valPred = XVal.map(x => model.predict(x));
-        modelMetrics = { ...calculateMetrics(yVal, valPred), k: 3 };
-        modelName = 'K-Nearest Neighbors';
-      } else {
-        // Treinar Random Forest com menos árvores e profundidade
-        model = new RandomForest(10, 4);
-        model.fit(XTrain, yTrain);
-        const valPred = XVal.map(x => model.predict(x));
-        modelMetrics = { ...calculateMetrics(yVal, valPred), numTrees: 10, maxDepth: 4 };
-        modelName = 'Random Forest';
+      const futureM = 6, pA = [], pP = [];
+      let ldA = hist.slice(-3), ldP = hist.slice(-3);
+      const cF = hist[hist.length - 1].flaring, tF = cF * 0.09;
+      for (let i = 0; i < futureM; i++) {
+        const rF = ldA.map(d => d.flaring), avg = rF.reduce((a, b) => a + b, 0) / rF.length;
+        const fA = [...rF, avg, rF[rF.length - 1] - avg, ((hist[hist.length - 1].monthOfYear + i + 1) % 12) / 11, 1 + (i / futureM) * 0.03];
+        const nfA = fA.map((v, j) => (v - means[j]) / stds[j]);
+        pA.push(Math.max(0, model.predict(nfA)));
+        const pPval = i < 3 ? cF - (cF - tF) * ((i + 1) / 3) + (Math.random() - 0.5) * cF * 0.01 : tF + (Math.random() - 0.5) * tF * 0.05;
+        pP.push(Math.max(tF * 0.95, pPval));
+        ldA = [...ldA.slice(1), { flaring: pA[i], monthOfYear: (hist[hist.length - 1].monthOfYear + i + 1) % 12, trend: 1 + (i / futureM) * 0.03 }];
+        ldP = [...ldP.slice(1), { flaring: pP[i], monthOfYear: (hist[hist.length - 1].monthOfYear + i + 1) % 12, trend: 0.1 }];
       }
-
-      // Previsões futuras (6 meses para sistema atual, implementação gradual do proposto)
-      const futureMonths = 6;
-      const predictionsAtual = [];
-      const predictionsProposto = [];
-
-      let lastDataAtual = historicalData.slice(-lookback);
-      let lastDataProposto = historicalData.slice(-lookback);
-
-      const currentFlaring = historicalData[historicalData.length - 1].flaring;
-      const targetFlaring = currentFlaring * 0.09; // 9% do atual (91% de redução)
-      const implementationMonths = 3; // 3 meses para implementar o sistema
-
-      for (let i = 0; i < futureMonths; i++) {
-        // Sistema Atual: usa o modelo para prever
-        const recentFlaring = lastDataAtual.map(d => d.flaring);
-        const movingAvg = recentFlaring.reduce((a, b) => a + b, 0) / recentFlaring.length;
-        const currentVal = recentFlaring[recentFlaring.length - 1];
-
-        const featuresAtual = [
-          ...recentFlaring,
-          movingAvg,
-          currentVal - movingAvg,
-          ((historicalData[historicalData.length - 1].monthOfYear + i + 1) % 12) / 11,
-          1 + (i / futureMonths) * 0.03
-        ];
-
-        const normalizedFeaturesAtual = featuresAtual.map((val, j) => (val - means[j]) / stds[j]);
-        const predAtual = model.predict(normalizedFeaturesAtual);
-        predictionsAtual.push(Math.max(0, predAtual));
-
-        // Sistema Proposto: implementação rápida (3 meses) e estabilização em 9%
-        let predProposto;
-        if (i < implementationMonths) {
-          // Fase de implementação: redução progressiva
-          const progress = (i + 1) / implementationMonths;
-          const currentTarget = currentFlaring - (currentFlaring - targetFlaring) * progress;
-          predProposto = currentTarget + (Math.random() - 0.5) * currentFlaring * 0.01;
-        } else {
-          // Fase de operação estável: mantém em ~9% com pequena variação
-          predProposto = targetFlaring + (Math.random() - 0.5) * targetFlaring * 0.05;
-        }
-
-        predictionsProposto.push(Math.max(targetFlaring * 0.95, predProposto));
-
-        lastDataAtual = [
-          ...lastDataAtual.slice(1),
-          {
-            flaring: predAtual,
-            monthOfYear: (historicalData[historicalData.length - 1].monthOfYear + i + 1) % 12,
-            trend: 1 + (i / futureMonths) * 0.03
-          }
-        ];
-
-        lastDataProposto = [
-          ...lastDataProposto.slice(1),
-          {
-            flaring: predProposto,
-            monthOfYear: (historicalData[historicalData.length - 1].monthOfYear + i + 1) % 12,
-            trend: 0.1
-          }
-        ];
-      }
-
-      setMetrics({
-        atual: modelMetrics,
-        proposto: modelMetrics,
-        modelName
-      });
-
-      setPredictions({
-        atual: predictionsAtual,
-        proposto: predictionsProposto
-      });
-
+      setMetrics({ atual: mm, proposto: mm, modelName: mName });
+      setPredictions({ atual: pA, proposto: pP });
       setIsTraining(false);
-
-      return { atual: predictionsAtual, proposto: predictionsProposto };
-
-    } catch (err) {
-      console.error('Erro ao treinar modelos:', err);
-      setError(err.message);
-      setIsTraining(false);
-      return null;
-    }
+    } catch (err) { setError(err.message); setIsTraining(false); }
   };
 
-  // Treinar modelos ao montar componente e quando mudar o modelo
-  useEffect(() => {
-    const runTraining = async () => {
-      const historical = generateHistoricalData(48);
-      await trainModels(historical);
-    };
+  useEffect(() => { trainModels(generateHistoricalData(48)); }, [data, selectedModel]);
 
-    runTraining();
-  }, [data, selectedModel]);
-
-  // Preparar dados para o gráfico
-  const prepareChartData = () => {
-    const historical = generateHistoricalData(48);
-
-    if (!predictions.atual && !predictions.proposto) {
-      return {
-        historical,
-        predictionsAtual: [],
-        predictionsProposto: [],
-        dates: historical.map(d => d.date)
-      };
-    }
-
-    // Gerar datas futuras
-    const futureDates = [];
-    const lastDate = historical[historical.length - 1].date;
-    const predLength = predictions.atual?.length || predictions.proposto?.length || 0;
-
-    for (let i = 1; i <= predLength; i++) {
-      const futureDate = new Date(lastDate);
-      futureDate.setMonth(futureDate.getMonth() + i);
-      futureDates.push(futureDate);
-    }
-
+  const prepareChart = () => {
+    const hist = generateHistoricalData(48);
+    if (!predictions.atual) return { hist, pA: [], pP: [], dates: hist.map(d => d.date) };
+    const fD = [], last = hist[hist.length - 1].date;
+    for (let i = 1; i <= (predictions.atual?.length || 0); i++) { const d = new Date(last); d.setMonth(d.getMonth() + i); fD.push(d); }
     return {
-      historical,
-      predictionsAtual: predictions.atual ? predictions.atual.map((value, index) => ({
-        month: historical.length + index,
-        flaring: value,
-        date: futureDates[index]
-      })) : [],
-      predictionsProposto: predictions.proposto ? predictions.proposto.map((value, index) => ({
-        month: historical.length + index,
-        flaring: value,
-        date: futureDates[index]
-      })) : [],
-      dates: [...historical.map(d => d.date), ...futureDates]
+      hist, dates: [...hist.map(d => d.date), ...fD],
+      pA: predictions.atual.map((v, i) => ({ flaring: v, date: fD[i] })),
+      pP: predictions.proposto.map((v, i) => ({ flaring: v, date: fD[i] })),
     };
   };
 
-  const chartData = prepareChartData();
+  const cd = prepareChart();
 
-  // Dados do gráfico Plotly
   const plotData = [
-    {
-      x: chartData.historical.map(d => d.date),
-      y: chartData.historical.map(d => d.flaring),
-      name: t.historicalData,
-      type: 'scatter',
-      mode: 'lines+markers',
-      line: { color: '#64748b', width: 2 },
-      marker: { size: 5, color: '#64748b' },
-      hovertemplate: `<b>${t.historicalLabel}</b><br>${t.dateLabel}: %{x|%b %Y}<br>${t.flaringLabel}: %{y:,.0f} Sm³/d<extra></extra>`
-    },
-    predictions.atual && {
-      x: chartData.predictionsAtual.map(d => d.date),
-      y: chartData.predictionsAtual.map(d => d.flaring),
-      name: t.currentSystemNoRecovery,
-      type: 'scatter',
-      mode: 'lines+markers',
-      line: { color: '#dc2626', width: 3, dash: 'dash' },
-      marker: { size: 8, color: '#dc2626', symbol: 'x' },
-      hovertemplate: `<b>${t.currentSystemTitle}</b><br>${t.dateLabel}: %{x|%b %Y}<br>${t.flaringLabel}: %{y:,.0f} Sm³/d<extra></extra>`
-    },
-    predictions.proposto && {
-      x: chartData.predictionsProposto.map(d => d.date),
-      y: chartData.predictionsProposto.map(d => d.flaring),
-      name: t.proposedSystemWithRecovery,
-      type: 'scatter',
-      mode: 'lines+markers',
-      line: { color: '#10b981', width: 3, dash: 'solid' },
-      marker: { size: 8, color: '#10b981', symbol: 'diamond' },
-      fill: 'tonexty',
-      fillcolor: 'rgba(16, 185, 129, 0.1)',
-      hovertemplate: `<b>${t.proposedSystemTitle}</b><br>${t.dateLabel}: %{x|%b %Y}<br>${t.flaringLabel}: %{y:,.0f} Sm³/d<extra></extra>`
-    }
+    { x: cd.hist.map(d => d.date), y: cd.hist.map(d => d.flaring), name: t.historicalData, type: 'scatter', mode: 'lines',
+      line: { color: T.txtS, width: 1.5 }, hovertemplate: `<b>Historical</b><br>%{x|%b %Y}: %{y:,.0f} Sm³/d<extra></extra>` },
+    predictions.atual && { x: cd.pA.map(d => d.date), y: cd.pA.map(d => d.flaring), name: t.currentSystemNoRecovery,
+      type: 'scatter', mode: 'lines+markers', line: { color: T.red, width: 2.5, dash: 'dash' }, marker: { size: 7, color: T.red, symbol: 'x' },
+      hovertemplate: `<b>Current</b><br>%{x|%b %Y}: %{y:,.0f} Sm³/d<extra></extra>` },
+    predictions.proposto && { x: cd.pP.map(d => d.date), y: cd.pP.map(d => d.flaring), name: t.proposedSystemWithRecovery,
+      type: 'scatter', mode: 'lines+markers', line: { color: T.green, width: 2.5 }, marker: { size: 7, color: T.green, symbol: 'diamond' },
+      fill: 'tonexty', fillcolor: T.green + '15', hovertemplate: `<b>Proposed</b><br>%{x|%b %Y}: %{y:,.0f} Sm³/d<extra></extra>` },
   ].filter(Boolean);
 
   const layout = {
-    title: {
-      text: t.flaringForecast,
-      font: { size: 18, weight: 700, family: 'Segoe UI, sans-serif' }
-    },
-    xaxis: {
-      title: { text: t.periodLabel, font: { size: 13, weight: 600 } },
-      type: 'date',
-      gridcolor: '#e5e7eb'
-    },
-    yaxis: {
-      title: { text: t.gasFlaringSm3d, font: { size: 13, weight: 600 } },
-      tickformat: ',.0f',
-      gridcolor: '#e5e7eb'
-    },
-    plot_bgcolor: '#fafafa',
-    paper_bgcolor: 'white',
-    margin: { t: 60, r: 30, b: 60, l: 80 },
-    height: 450,
-    legend: {
-      x: 0.5,
-      y: -0.15,
-      xanchor: 'center',
-      yanchor: 'top',
-      orientation: 'h',
-      bgcolor: 'rgba(255,255,255,0.9)',
-      bordercolor: '#d1d5db',
-      borderwidth: 1
-    },
-    font: { family: 'Segoe UI, sans-serif' },
-    shapes: (predictions.atual || predictions.proposto) ? [
-      {
-        type: 'line',
-        x0: chartData.historical[chartData.historical.length - 1].date,
-        x1: chartData.historical[chartData.historical.length - 1].date,
-        y0: 0,
-        y1: Math.max(...chartData.historical.map(d => d.flaring)) * 1.2,
-        line: {
-          color: '#94a3b8',
-          width: 2,
-          dash: 'dot'
-        }
-      }
-    ] : [],
-    annotations: (predictions.atual || predictions.proposto) ? [
-      {
-        x: chartData.historical[chartData.historical.length - 1].date,
-        y: Math.max(...chartData.historical.map(d => d.flaring)) * 1.15,
-        text: t.startOfPredictions,
-        showarrow: true,
-        arrowhead: 2,
-        arrowcolor: '#94a3b8',
-        font: { color: '#64748b', size: 11, weight: 600 }
-      }
-    ] : []
-  };
-
-  const config = {
-    responsive: true,
-    displayModeBar: true,
-    displaylogo: false
+    plot_bgcolor: T.plotBg, paper_bgcolor: T.paperBg, font: T.font,
+    margin: { t: 20, r: 20, b: 50, l: 70 }, height: 400,
+    xaxis: { type: 'date', gridcolor: T.grid, tickfont: { size: 10, color: T.txtS } },
+    yaxis: { title: { text: 'Sm³/d', font: { size: 10, color: T.txtS } }, tickformat: ',.0f', gridcolor: T.grid, tickfont: { size: 10, color: T.txtS } },
+    legend: { x: 0.5, xanchor: 'center', y: -0.15, orientation: 'h', bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: T.txt } },
+    shapes: (predictions.atual || predictions.proposto) ? [{ type: 'line',
+      x0: cd.hist[cd.hist.length - 1].date, x1: cd.hist[cd.hist.length - 1].date,
+      y0: 0, y1: Math.max(...cd.hist.map(d => d.flaring)) * 1.15,
+      line: { color: T.accent, width: 1.5, dash: 'dot' },
+    }] : [],
+    annotations: (predictions.atual || predictions.proposto) ? [{ x: cd.hist[cd.hist.length - 1].date,
+      y: Math.max(...cd.hist.map(d => d.flaring)) * 1.1, text: t.startOfPredictions || 'Prediction Start',
+      showarrow: true, arrowhead: 2, arrowcolor: T.accent, font: { color: T.accent, size: 10, family: 'Consolas' },
+    }] : [],
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header com Status e Seletor de Modelo */}
-      <div className="card bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Activity size={24} className="text-blue-600" />
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: T.border }}>
+          <div className="flex items-center gap-2">
+            <PulseSquare24Regular style={{ color: T.accent }} />
             <div>
-              <h3 className="text-lg font-bold text-gray-900">{t.mlForecast}</h3>
-              <p className="text-xs text-gray-600">{t.currentVsProposedNext6Months}</p>
+              <span className="text-xs font-semibold font-mono" style={{ color: T.txt }}>{t.mlForecast || 'ML FORECAST'}</span>
+              <span className="text-[10px] ml-2 font-mono" style={{ color: T.txtS }}>{t.currentVsProposedNext6Months || '6-month prediction'}</span>
             </div>
           </div>
-
-          {!isTraining && !error && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-gray-700">{t.modelLabel}</span>
-              <button
-                onClick={() => setSelectedModel('rf')}
-                className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
-                  selectedModel === 'rf'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+          <div className="flex items-center gap-2">
+            {!isTraining && !error && ['rf', 'knn'].map(m => (
+              <button key={m} onClick={() => setSelectedModel(m)}
+                className="px-3 py-1 rounded text-[10px] font-mono font-bold transition-colors"
+                style={{
+                  backgroundColor: selectedModel === m ? (m === 'rf' ? T.green : T.yellow) : (T.isDark ? '#2d2d2d' : '#f3f4f6'),
+                  color: selectedModel === m ? '#1e1e1e' : T.txtS,
+                }}
               >
-                Random Forest
+                {m === 'rf' ? 'Random Forest' : 'K-NN'}
               </button>
-              <button
-                onClick={() => setSelectedModel('knn')}
-                className={`px-3 py-1.5 rounded text-xs font-semibold transition-all ${
-                  selectedModel === 'knn'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                K-NN
-              </button>
-            </div>
-          )}
-
-          {isTraining && (
-            <div className="flex items-center gap-2 text-blue-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              <span className="text-xs font-medium">{t.trainingStatus}</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle size={16} />
-              <span className="text-xs font-medium">{t.errorStatus}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Métricas do Modelo */}
-      {metrics.atual && !isTraining && (
-        <div className="card bg-white border border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              {selectedModel === 'rf' ? (
-                <TreeDeciduous size={20} className="text-green-600" />
-              ) : (
-                <Activity size={20} className="text-amber-600" />
-              )}
-              <h4 className="text-sm font-bold text-gray-900">{metrics.modelName}</h4>
-            </div>
-            <span className="text-xs text-gray-500">{t.validationMetrics}</span>
-          </div>
-          <div className="grid grid-cols-4 gap-3">
-            <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">MAE</p>
-              <p className="text-lg font-bold text-gray-900">
-                {metrics.atual.mae.toFixed(0)}
-              </p>
-              <p className="text-[10px] text-gray-500">Sm³/d</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">RMSE</p>
-              <p className="text-lg font-bold text-gray-900">
-                {metrics.atual.rmse.toFixed(0)}
-              </p>
-              <p className="text-[10px] text-gray-500">Sm³/d</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">R²</p>
-              <p className="text-lg font-bold text-gray-900">
-                {metrics.atual.r2.toFixed(3)}
-              </p>
-              <p className="text-[10px] text-gray-500">Score</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xs text-gray-600 mb-1">{selectedModel === 'rf' ? t.treesLabel : 'K'}</p>
-              <p className="text-lg font-bold text-gray-900">
-                {selectedModel === 'rf' ? metrics.atual.numTrees : metrics.atual.k}
-              </p>
-              <p className="text-[10px] text-gray-500">{selectedModel === 'rf' ? 'Trees' : t.neighborsLabel}</p>
-            </div>
+            ))}
+            {isTraining && (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2" style={{ borderColor: T.accent }} />
+                <span className="text-[10px] font-mono" style={{ color: T.accent }}>{t.trainingStatus || 'Training...'}</span>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Gráfico de Previsão */}
-      <div className="card">
-        {isTraining ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-3 border-blue-600 mb-3"></div>
-            <p className="text-sm font-semibold text-gray-700">{t.trainingModel}</p>
+        {/* Metrics bar */}
+        {metrics.atual && !isTraining && (
+          <div className="px-4 py-2 border-b flex items-center gap-6" style={{ borderColor: T.border, backgroundColor: T.isDark ? '#1e1e1e' : '#fafafa' }}>
+            <div className="flex items-center gap-1.5">
+              {selectedModel === 'rf' ? <LeafTwo24Regular style={{ color: T.green, width: 16, height: 16 }} /> : <PulseSquare20Regular style={{ color: T.yellow, width: 16, height: 16 }} />}
+              <span className="text-[10px] font-mono font-bold" style={{ color: T.txt }}>{metrics.modelName}</span>
+            </div>
+            {[
+              { label: 'MAE', value: metrics.atual.mae.toFixed(0), unit: 'Sm³/d' },
+              { label: 'RMSE', value: metrics.atual.rmse.toFixed(0), unit: 'Sm³/d' },
+              { label: 'R²', value: metrics.atual.r2.toFixed(3), unit: '' },
+              { label: selectedModel === 'rf' ? 'Trees' : 'K', value: selectedModel === 'rf' ? metrics.atual.numTrees : metrics.atual.k, unit: '' },
+            ].map((m, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <span className="text-[10px] font-mono" style={{ color: T.txtS }}>{m.label}:</span>
+                <span className="text-[10px] font-mono font-bold" style={{ color: T.green }}>{m.value}</span>
+                {m.unit && <span className="text-[9px] font-mono" style={{ color: T.txtS }}>{m.unit}</span>}
+              </div>
+            ))}
           </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <AlertCircle size={40} className="text-red-500 mb-3" />
-            <p className="text-sm font-semibold text-gray-700">{t.errorTrainingModel}</p>
-            <p className="text-xs text-gray-500 mt-1">{error}</p>
-          </div>
-        ) : (
-          <Plot data={plotData} layout={layout} config={config} style={{ width: '100%' }} />
         )}
+
+        {/* Chart */}
+        <div>
+          {isTraining ? (
+            <div className="flex flex-col items-center justify-center py-16" style={{ backgroundColor: T.plotBg }}>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mb-3" style={{ borderColor: T.accent }} />
+              <span className="text-xs font-mono" style={{ color: T.txtS }}>{t.trainingModel || 'Training model...'}</span>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-16" style={{ backgroundColor: T.plotBg }}>
+              <ErrorCircle20Regular style={{ color: T.red }} className="mb-2" />
+              <span className="text-xs font-mono" style={{ color: T.red }}>{error}</span>
+            </div>
+          ) : (
+            <Plot data={plotData} layout={layout}
+              config={{ responsive: true, displayModeBar: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d'] }}
+              style={{ width: '100%' }} />
+          )}
+        </div>
       </div>
 
-      {/* Informações do Modelo e Cenários */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Info do Modelo */}
-        <div className="card bg-gradient-to-br from-blue-50 to-indigo-50">
-          <h4 className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1.5">
-            {selectedModel === 'rf' ? (
-              <TreeDeciduous size={14} className="text-blue-600" />
-            ) : (
-              <Activity size={14} className="text-blue-600" />
-            )}
-            {selectedModel === 'rf' ? 'Random Forest' : 'K-Nearest Neighbors'}
-          </h4>
-          <ul className="list-disc list-inside text-[11px] text-gray-600 space-y-0.5">
-            {selectedModel === 'rf' ? (
-              <>
-                <li>{t.decisionTrees}</li>
-                <li>{t.maxDepth}</li>
-                <li>{t.bootstrapSampling}</li>
-              </>
-            ) : (
-              <>
-                <li>{t.kNeighbors}</li>
-                <li>{t.euclideanDistance}</li>
-                <li>{t.weightedAverage}</li>
-              </>
-            )}
-          </ul>
-        </div>
-
-        {/* Sistema Atual */}
-        <div className="card bg-gradient-to-br from-red-50 to-orange-50">
-          <h4 className="text-xs font-bold text-gray-800 mb-2">{t.currentSystemTitle}</h4>
-          <ul className="list-disc list-inside text-[11px] text-gray-600 space-y-0.5">
-            <li>{t.continuousGasFlaring}</li>
-            <li>{t.noRecoverySystem}</li>
-            <li>{t.maintenanceTrend}</li>
-          </ul>
-        </div>
-
-        {/* Sistema Proposto */}
-        <div className="card bg-gradient-to-br from-green-50 to-emerald-50">
-          <h4 className="text-xs font-bold text-gray-800 mb-2">{t.proposedSystemTitle}</h4>
-          <ul className="list-disc list-inside text-[11px] text-gray-600 space-y-0.5">
-            <li>{t.gasRecovery91}</li>
-            <li>{t.implementation3Months}</li>
-            <li>{t.stabilizesAt9Percent}</li>
-          </ul>
-        </div>
+      {/* Info Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {[
+          { title: selectedModel === 'rf' ? 'Random Forest' : 'K-Nearest Neighbors', color: T.accent,
+            icon: selectedModel === 'rf' ? <LeafTwo24Regular style={{ color: T.accent, width: 14, height: 14 }} /> : <PulseSquare20Regular style={{ color: T.accent, width: 14, height: 14 }} />,
+            items: selectedModel === 'rf' ? [t.decisionTrees, t.maxDepth, t.bootstrapSampling] : [t.kNeighbors, t.euclideanDistance, t.weightedAverage] },
+          { title: t.currentSystemTitle || 'Current System', color: T.red, icon: null,
+            items: [t.continuousGasFlaring, t.noRecoverySystem, t.maintenanceTrend] },
+          { title: t.proposedSystemTitle || 'Proposed System', color: T.green, icon: null,
+            items: [t.gasRecovery91, t.implementation3Months, t.stabilizesAt9Percent] },
+        ].map((card, i) => (
+          <div key={i} className="card p-0 overflow-hidden" style={{ borderLeft: `3px solid ${card.color}` }}>
+            <div className="px-3 py-2 flex items-center gap-1.5">
+              {card.icon}
+              <span className="text-[11px] font-mono font-bold" style={{ color: T.txt }}>{card.title}</span>
+            </div>
+            <div className="px-3 pb-2">
+              {card.items.map((item, j) => (
+                <div key={j} className="text-[10px] font-mono py-0.5" style={{ color: T.txtS }}>
+                  <span style={{ color: card.color }}>{'>'}</span> {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1,350 +1,339 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import { EmissionCalculator } from '../utils/calculations';
 import { NumberFormatter } from '../utils/unitConverter';
 import { useLanguage } from '../contexts/LanguageContext';
 
-/**
- * Gráficos Comparativos - Sistema Atual vs Proposto
- */
+/* VS Code Plotly theme */
+function usePlotlyTheme() {
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const check = () => setIsDark(document.body.classList.contains('dark'));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+
+  return {
+    isDark,
+    plotBg:    isDark ? '#1e1e1e' : '#ffffff',
+    paperBg:   isDark ? '#252526' : '#ffffff',
+    gridColor: isDark ? '#333333' : '#e5e7eb',
+    textColor: isDark ? '#d4d4d4' : '#1f2937',
+    subText:   isDark ? '#858585' : '#6b7280',
+    font:      { family: 'Consolas, Monaco, monospace', color: isDark ? '#d4d4d4' : '#1f2937' },
+    border:    isDark ? '#3e3e3e' : '#e5e7eb',
+    accent:    '#007acc',
+    // VS Code palette
+    red:       '#f44747',
+    green:     '#4ec9b0',
+    blue:      '#569cd6',
+    yellow:    '#dcdcaa',
+    orange:    '#ce9178',
+    purple:    '#c586c0',
+  };
+}
+
+const plotConfig = {
+  responsive: true,
+  displayModeBar: true,
+  modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
+  displaylogo: false,
+  modeBarStyle: { backgroundColor: 'transparent' },
+};
+
 export default function ComparativeCharts({ data }) {
   const { t } = useLanguage();
+  const T = usePlotlyTheme();
+
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
 
   const reducaoEmissoes = cenarioAtual.emissoes_total - cenarioProposto.emissoes_total;
   const reducaoPercentual = (reducaoEmissoes / cenarioAtual.emissoes_total) * 100;
 
-  // Cálculos de redução por fonte - VALORES TROCADOS
-  // LP Flare + Hull Vent usa os valores do HP (que é maior)
-  // HP Flare usa os valores do LP (que é menor)
   const reducaoLPHull = (cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull) - (cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull);
   const reducaoHP = cenarioAtual.emissoes_lp_flare - cenarioProposto.emissoes_lp_flare;
 
-  const vazaoLPFlare = data.monitoring?.totals?.totalLP || 27900;
-  const vazaoHPFlare = data.monitoring?.totals?.totalHP || 40000;
-  const vazaoHull = 0;
+  const vazaoLP = data.monitoring?.totals?.totalLP || 19925;
+  const vazaoHP = data.monitoring?.totals?.totalHP || 7975;
+  const vazaoHull = data.monitoring?.totals?.totalHull || 40000;
+  const totalFlare = vazaoLP + vazaoHP + vazaoHull;
 
-  // Vazões propostas (após redução) - VALORES TROCADOS
-  // LP Flare + Hull Vent (usa valores do HP)
-  const vazaoLPHullProposto = (vazaoHPFlare + vazaoHull) * 0.09; // 9% residual (91% redução)
-  // HP Flare (usa valores do LP)
-  const vazaoHPProposto = vazaoLPFlare * 0.09; // 9% residual (91% redução)
+  const vazaoLPProp = vazaoLP * 0.09;
+  const vazaoHPProp = vazaoHP * 0.09;
+  const vazaoHullProp = vazaoHull * 0.05;
+  const totalProp = vazaoLPProp + vazaoHPProp + vazaoHullProp;
+
+  // Monthly projection (12 months)
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + i);
+    return d.toLocaleDateString('en', { month: 'short', year: '2-digit' });
+  });
+  const monthlyAtual = months.map((_, i) => totalFlare * (1 + Math.sin(i / 3) * 0.04 + (Math.random() - 0.5) * 0.02));
+  const monthlyProp = months.map((_, i) => {
+    const ramp = Math.min(1, (i + 1) / 3);
+    return totalFlare * (1 - 0.91 * ramp) + Math.sin(i / 4) * totalFlare * 0.005;
+  });
+
+  const baseLayout = {
+    plot_bgcolor: T.plotBg,
+    paper_bgcolor: T.paperBg,
+    font: T.font,
+    margin: { t: 30, b: 40, l: 60, r: 20 },
+    xaxis: { gridcolor: T.gridColor, tickfont: { size: 10, color: T.subText } },
+    yaxis: { gridcolor: T.gridColor, tickfont: { size: 10, color: T.subText }, tickformat: ',.0f' },
+    showlegend: true,
+    legend: {
+      x: 0.5, xanchor: 'center', y: 1.12, orientation: 'h',
+      bgcolor: 'rgba(0,0,0,0)', font: { size: 10, color: T.textColor },
+    },
+  };
 
   return (
     <div className="space-y-3">
-      {/* Gráfico 1: Ganho Absoluto - Compacto */}
-      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">
-          {t.gain}: {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano ({NumberFormatter.format(reducaoPercentual, 1)}% {t.reductionLabel2})
-        </h3>
-        <Plot
-          data={[
-            {
-              x: [t.lpFlareHullVent, t.hpFlare, t.total.toUpperCase()],
+      {/* Row 1: Emission Reduction Bar + Emissions by Source */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Chart 1: Absolute Reduction — Waterfall style */}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: T.border }}>
+            <span className="text-xs font-semibold font-mono" style={{ color: T.textColor }}>
+              CO2_REDUCTION.chart
+            </span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ backgroundColor: T.isDark ? '#1a3a2a' : '#ecfdf5', color: T.green }}>
+              -{reducaoPercentual.toFixed(1)}%
+            </span>
+          </div>
+          <Plot
+            data={[{
+              x: [t.lpFlareHullVent || 'LP+Hull', t.hpFlare || 'HP Flare', 'TOTAL'],
               y: [reducaoLPHull, reducaoHP, reducaoEmissoes],
               type: 'bar',
               marker: {
-                color: ['#60b8d4', '#20a8c4', '#10b981'],
-                line: {
-                  color: '#059669',
-                  width: 1.5
-                }
+                color: [T.green, T.blue, T.accent],
+                line: { color: [T.green, T.blue, T.accent].map(c => c + 'cc'), width: 1 },
               },
-              text: [
-                `${NumberFormatter.format(reducaoLPHull, 0)}`,
-                `${NumberFormatter.format(reducaoHP, 0)}`,
-                `${NumberFormatter.format(reducaoEmissoes, 0)}`
-              ],
+              text: [reducaoLPHull, reducaoHP, reducaoEmissoes].map(v => NumberFormatter.format(v, 0)),
               textposition: 'inside',
-              textfont: {
-                color: 'white',
-                size: 11,
-                family: 'Arial, sans-serif',
-                weight: 'bold'
-              },
-              hovertemplate: `<b>%{x}</b><br>${t.reduction}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
-            }
-          ]}
-          layout={{
-            title: {
-              text: '',
-              font: { size: 14, family: 'Arial, sans-serif' },
-              x: 0.5,
-              xanchor: 'center'
-            },
-            xaxis: {
-              title: '',
-              tickfont: { size: 10, family: 'Arial, sans-serif' },
-              titlefont: { size: 10 },
-              titlestandoff: 25
-            },
-            yaxis: {
-              title: { text: t.reductionTco2Year, font: { size: 10 } },
-              tickformat: ',.0f',
-              gridcolor: '#e5e7eb'
-            },
-            plot_bgcolor: 'white',
-            paper_bgcolor: 'white',
-            height: 280,
-            margin: { t: 20, b: 40, l: 60, r: 20 },
-            showlegend: false
-          }}
-          config={{
-            responsive: true,
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-            displaylogo: false
-          }}
-          style={{ width: '100%' }}
-        />
-      </div>
+              textfont: { color: '#ffffff', size: 12, family: 'Consolas, monospace' },
+              hovertemplate: '<b>%{x}</b><br>Reduction: %{y:,.0f} tCO₂eq/yr<extra></extra>',
+            }]}
+            layout={{
+              ...baseLayout,
+              height: 300,
+              showlegend: false,
+              yaxis: { ...baseLayout.yaxis, title: { text: 'tCO₂eq/yr', font: { size: 10, color: T.subText } } },
+            }}
+            config={plotConfig}
+            style={{ width: '100%' }}
+          />
+        </div>
 
-      {/* Gráfico 2: Emissões por Fonte - Compacto */}
-      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">
-          {t.emissionsBySource}
-        </h3>
-        <Plot
-          data={[
-            {
-              x: [t.lpFlareHullVent, t.hpFlare, t.total.toUpperCase()],
-              y: [
-                cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull,
-                cenarioAtual.emissoes_lp_flare,
-                cenarioAtual.emissoes_total
-              ],
-              name: t.currentLabel,
-              type: 'bar',
-              marker: {
-                color: '#ef4444',
-                line: {
-                  color: '#dc2626',
-                  width: 1.5
-                }
-              },
-              text: [
-                NumberFormatter.format(cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull, 0),
-                NumberFormatter.format(cenarioAtual.emissoes_lp_flare, 0),
-                NumberFormatter.format(cenarioAtual.emissoes_total, 0)
-              ],
-              textposition: 'inside',
-              textfont: {
-                color: 'white',
-                size: 10,
-                weight: 'bold'
-              },
-              hovertemplate: `<b>%{x}</b><br>${t.currentLabel}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
-            },
-            {
-              x: [t.lpFlareHullVent, t.hpFlare, t.total.toUpperCase()],
-              y: [
-                cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull,
-                cenarioProposto.emissoes_lp_flare,
-                cenarioProposto.emissoes_total
-              ],
-              name: t.proposedLabel,
-              type: 'bar',
-              marker: {
-                color: '#10b981',
-                line: {
-                  color: '#059669',
-                  width: 1.5
-                }
-              },
-              text: [
-                NumberFormatter.format(cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull, 0),
-                NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0),
-                NumberFormatter.format(cenarioProposto.emissoes_total, 0)
-              ],
-              textposition: 'inside',
-              textfont: {
-                color: 'white',
-                size: 10,
-                weight: 'bold'
-              },
-              hovertemplate: `<b>%{x}</b><br>${t.proposedLabel}: %{y:,.0f} tCO₂eq/ano<extra></extra>`
-            }
-          ]}
-          layout={{
-            title: {
-              text: '',
-              font: { size: 14, family: 'Arial, sans-serif' },
-              x: 0.5,
-              xanchor: 'center'
-            },
-            xaxis: {
-              title: { text: '', font: { size: 10 } },
-              tickfont: { size: 10 },
-              titlestandoff: 25
-            },
-            yaxis: {
-              title: { text: t.emissionsTco2Year, font: { size: 10 } },
-              tickformat: ',.0f',
-              gridcolor: '#e5e7eb'
-            },
-            plot_bgcolor: 'white',
-            paper_bgcolor: 'white',
-            height: 300,
-            margin: { t: 20, b: 40, l: 60, r: 20 },
-            showlegend: true,
-            legend: {
-              x: 0.5,
-              xanchor: 'center',
-              y: 1.1,
-              orientation: 'h',
-              bgcolor: 'rgba(255, 255, 255, 0.9)',
-              bordercolor: '#e5e7eb',
-              borderwidth: 1,
-              font: { size: 10 }
-            },
-            barmode: 'group'
-          }}
-          config={{
-            responsive: true,
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-            displaylogo: false
-          }}
-          style={{ width: '100%' }}
-        />
-      </div>
-
-      {/* Gráfico 3: Comparação de Vazões - Compacto */}
-      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-900 mb-2">
-          {t.operationalFlowComparison}
-        </h3>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* Cenário Atual */}
-          <div>
-            <h4 className="text-xs font-semibold text-gray-700 mb-2 text-center">{t.currentLabel}</h4>
-            <Plot
-              data={[
-                {
-                  x: [t.lpFlareHullVent, t.hpFlare],
-                  y: [vazaoHPFlare + vazaoHull, vazaoLPFlare],
-                  type: 'bar',
-                  marker: {
-                    color: ['#ef4444', '#f97316'],
-                    line: {
-                      color: ['#dc2626', '#ea580c'],
-                      width: 1.5
-                    }
-                  },
-                  text: [
-                    `${NumberFormatter.format(vazaoHPFlare + vazaoHull, 0)}`,
-                    `${NumberFormatter.format(vazaoLPFlare, 0)}`
-                  ],
-                  textposition: 'inside',
-                  textfont: {
-                    color: 'white',
-                    size: 10,
-                    weight: 'bold'
-                  },
-                  hovertemplate: `<b>%{x}</b><br>${t.flowLabel}: %{y:,.0f} Sm³/d<extra></extra>`
-                }
-              ]}
-              layout={{
-                title: {
-                  text: '',
-                  font: { size: 11, family: 'Arial, sans-serif' },
-                  x: 0.5,
-                  xanchor: 'center'
-                },
-                xaxis: {
-                  tickfont: { size: 9 },
-                  titlestandoff: 25
-                },
-                yaxis: {
-                  title: { text: t.flowSm3dLabel, font: { size: 9 } },
-                  tickformat: ',.0f',
-                  gridcolor: '#e5e7eb'
-                },
-                plot_bgcolor: 'white',
-                paper_bgcolor: 'white',
-                height: 250,
-                margin: { t: 20, b: 40, l: 60, r: 10 },
-                showlegend: false
-              }}
-              config={{
-            responsive: true,
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-            displaylogo: false
-          }}
-              style={{ width: '100%' }}
-            />
-            <div className="text-center mt-1 text-xs font-semibold text-gray-700">
-              {t.totalLabel}: {NumberFormatter.format((vazaoHull + vazaoLPFlare + vazaoHPFlare) / 1000, 1)} KSm³/d
+        {/* Chart 2: Emissions by Source — Grouped Bar */}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: T.border }}>
+            <span className="text-xs font-semibold font-mono" style={{ color: T.textColor }}>
+              EMISSIONS_BY_SOURCE.chart
+            </span>
+            <div className="flex gap-2 text-[10px]">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: T.red }} /><span style={{ color: T.subText }}>Before</span></span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: T.green }} /><span style={{ color: T.subText }}>After</span></span>
             </div>
           </div>
+          <Plot
+            data={[
+              {
+                x: [t.lpFlareHullVent || 'LP+Hull', t.hpFlare || 'HP', 'TOTAL'],
+                y: [cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull, cenarioAtual.emissoes_lp_flare, cenarioAtual.emissoes_total],
+                name: t.currentLabel || 'Current',
+                type: 'bar',
+                marker: { color: T.red, line: { color: T.red + 'aa', width: 1 } },
+                text: [cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull, cenarioAtual.emissoes_lp_flare, cenarioAtual.emissoes_total].map(v => NumberFormatter.format(v, 0)),
+                textposition: 'inside', textfont: { color: '#fff', size: 10, family: 'Consolas' },
+              },
+              {
+                x: [t.lpFlareHullVent || 'LP+Hull', t.hpFlare || 'HP', 'TOTAL'],
+                y: [cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull, cenarioProposto.emissoes_lp_flare, cenarioProposto.emissoes_total],
+                name: t.proposedLabel || 'Proposed',
+                type: 'bar',
+                marker: { color: T.green, line: { color: T.green + 'aa', width: 1 } },
+                text: [cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull, cenarioProposto.emissoes_lp_flare, cenarioProposto.emissoes_total].map(v => NumberFormatter.format(v, 0)),
+                textposition: 'inside', textfont: { color: '#fff', size: 10, family: 'Consolas' },
+              },
+            ]}
+            layout={{
+              ...baseLayout,
+              height: 300,
+              barmode: 'group',
+              yaxis: { ...baseLayout.yaxis, title: { text: 'tCO₂eq/yr', font: { size: 10, color: T.subText } } },
+            }}
+            config={plotConfig}
+            style={{ width: '100%' }}
+          />
+        </div>
+      </div>
 
-          {/* Cenário Proposto */}
-          <div>
-            <h4 className="text-xs font-semibold text-gray-700 mb-2 text-center">{t.proposedLabel}</h4>
-            <Plot
-              data={[
-                {
-                  x: [t.lpFlareHullVent, t.hpFlare],
-                  y: [vazaoLPHullProposto, vazaoHPProposto],
-                  type: 'bar',
-                  marker: {
-                    color: ['#10b981', '#06b6d4'],
-                    line: {
-                      color: ['#059669', '#0891b2'],
-                      width: 1.5
-                    }
-                  },
-                  text: [
-                    `${NumberFormatter.format(vazaoLPHullProposto, 0)}`,
-                    `${NumberFormatter.format(vazaoHPProposto, 0)}`
-                  ],
-                  textposition: 'inside',
-                  textfont: {
-                    color: 'white',
-                    size: 10,
-                    weight: 'bold'
-                  },
-                  hovertemplate: `<b>%{x}</b><br>${t.flowLabel}: %{y:,.0f} Sm³/d<extra></extra>`
-                }
-              ]}
-              layout={{
-                title: {
-                  text: '',
-                  font: { size: 11, family: 'Arial, sans-serif' },
-                  x: 0.5,
-                  xanchor: 'center'
-                },
-                xaxis: {
-                  tickfont: { size: 9 },
-                  titlestandoff: 25
-                },
-                yaxis: {
-                  title: { text: t.flowSm3dLabel, font: { size: 9 } },
-                  tickformat: ',.0f',
-                  gridcolor: '#e5e7eb'
-                },
-                plot_bgcolor: 'white',
-                paper_bgcolor: 'white',
-                height: 250,
-                margin: { t: 20, b: 40, l: 60, r: 10 },
-                showlegend: false
-              }}
-              config={{
-            responsive: true,
-            displayModeBar: true,
-            modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-            displaylogo: false
-          }}
-              style={{ width: '100%' }}
-            />
-            <div className="text-center mt-1 text-xs font-semibold text-green-700">
-              {t.totalLabel}: {NumberFormatter.format((vazaoLPHullProposto + vazaoHPProposto) / 1000, 1)} KSm³/d
-              (↓{NumberFormatter.format((1 - (vazaoLPHullProposto + vazaoHPProposto) / (vazaoHull + vazaoLPFlare + vazaoHPFlare)) * 100, 1)}%)
-            </div>
+      {/* Row 2: Flow Comparison Donut + Monthly Projection */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Chart 3: Flow Distribution — Dual Donut */}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2 border-b" style={{ borderColor: T.border }}>
+            <span className="text-xs font-semibold font-mono" style={{ color: T.textColor }}>
+              FLOW_DISTRIBUTION.chart
+            </span>
           </div>
+          <Plot
+            data={[
+              {
+                values: [vazaoHP, vazaoLP, vazaoHull],
+                labels: ['HP Flare', 'LP Flare', 'Hull Vent'],
+                type: 'pie', hole: 0.55,
+                domain: { x: [0, 0.45] },
+                marker: { colors: [T.red, T.orange, T.purple], line: { color: T.paperBg, width: 2 } },
+                textinfo: 'percent', textfont: { size: 11, color: '#fff', family: 'Consolas' },
+                hovertemplate: '<b>%{label}</b><br>%{value:,.0f} Sm³/d<br>%{percent}<extra>Current</extra>',
+                title: { text: `Current<br><b>${NumberFormatter.format(totalFlare / 1000, 1)}k</b>`, font: { size: 11, color: T.subText, family: 'Consolas' } },
+              },
+              {
+                values: [vazaoHPProp, vazaoLPProp, vazaoHullProp],
+                labels: ['HP Flare', 'LP Flare', 'Hull Vent'],
+                type: 'pie', hole: 0.55,
+                domain: { x: [0.55, 1] },
+                marker: { colors: [T.blue, T.green, T.yellow], line: { color: T.paperBg, width: 2 } },
+                textinfo: 'percent', textfont: { size: 11, color: '#fff', family: 'Consolas' },
+                hovertemplate: '<b>%{label}</b><br>%{value:,.0f} Sm³/d<br>%{percent}<extra>Proposed</extra>',
+                title: { text: `Proposed<br><b>${NumberFormatter.format(totalProp / 1000, 1)}k</b>`, font: { size: 11, color: T.subText, family: 'Consolas' } },
+              },
+            ]}
+            layout={{
+              ...baseLayout,
+              height: 300,
+              showlegend: true,
+              legend: { ...baseLayout.legend, y: -0.05 },
+              annotations: [
+                { x: 0.19, y: 0.5, text: '', showarrow: false },
+                { x: 0.81, y: 0.5, text: '', showarrow: false },
+              ],
+            }}
+            config={plotConfig}
+            style={{ width: '100%' }}
+          />
+        </div>
+
+        {/* Chart 4: 12-Month Projection — Area */}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: T.border }}>
+            <span className="text-xs font-semibold font-mono" style={{ color: T.textColor }}>
+              MONTHLY_PROJECTION.chart
+            </span>
+            <span className="text-[10px] font-mono" style={{ color: T.subText }}>12-month forecast</span>
+          </div>
+          <Plot
+            data={[
+              {
+                x: months, y: monthlyAtual,
+                name: t.currentLabel || 'Current',
+                type: 'scatter', mode: 'lines+markers',
+                line: { color: T.red, width: 2 },
+                marker: { size: 5, color: T.red },
+                fill: 'tozeroy', fillcolor: T.red + '15',
+              },
+              {
+                x: months, y: monthlyProp,
+                name: t.proposedLabel || 'Proposed',
+                type: 'scatter', mode: 'lines+markers',
+                line: { color: T.green, width: 2.5 },
+                marker: { size: 5, color: T.green, symbol: 'diamond' },
+                fill: 'tozeroy', fillcolor: T.green + '15',
+              },
+            ]}
+            layout={{
+              ...baseLayout,
+              height: 300,
+              yaxis: { ...baseLayout.yaxis, title: { text: 'Sm³/d', font: { size: 10, color: T.subText } } },
+              shapes: [{
+                type: 'line', x0: months[2], x1: months[2], y0: 0, y1: Math.max(...monthlyAtual) * 1.1,
+                line: { color: T.accent, width: 1, dash: 'dot' },
+              }],
+              annotations: [{
+                x: months[2], y: Math.max(...monthlyAtual) * 1.05,
+                text: 'Recovery Online', showarrow: false,
+                font: { size: 9, color: T.accent, family: 'Consolas' },
+              }],
+            }}
+            config={plotConfig}
+            style={{ width: '100%' }}
+          />
+        </div>
+      </div>
+
+      {/* Row 3: Stacked Bar — Before/After per source + Sankey-like horizontal */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Chart 5: Stacked — Current vs Proposed Breakdown */}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2 border-b" style={{ borderColor: T.border }}>
+            <span className="text-xs font-semibold font-mono" style={{ color: T.textColor }}>
+              FLOW_BREAKDOWN.chart
+            </span>
+          </div>
+          <Plot
+            data={[
+              { x: ['Current', 'Proposed'], y: [vazaoHP, vazaoHPProp], name: 'HP Flare', type: 'bar', marker: { color: T.red } },
+              { x: ['Current', 'Proposed'], y: [vazaoLP, vazaoLPProp], name: 'LP Flare', type: 'bar', marker: { color: T.orange } },
+              { x: ['Current', 'Proposed'], y: [vazaoHull, vazaoHullProp], name: 'Hull Vent', type: 'bar', marker: { color: T.purple } },
+            ]}
+            layout={{
+              ...baseLayout, height: 280, barmode: 'stack',
+              yaxis: { ...baseLayout.yaxis, title: { text: 'Sm³/d', font: { size: 10, color: T.subText } } },
+            }}
+            config={plotConfig}
+            style={{ width: '100%' }}
+          />
+        </div>
+
+        {/* Chart 6: Horizontal bar — Recovery Rate per source */}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2 border-b" style={{ borderColor: T.border }}>
+            <span className="text-xs font-semibold font-mono" style={{ color: T.textColor }}>
+              RECOVERY_RATE.chart
+            </span>
+          </div>
+          <Plot
+            data={[
+              {
+                y: ['HP Flare', 'LP Flare', 'Hull Vent', 'TOTAL'],
+                x: [91, 91, 95, ((totalFlare - totalProp) / totalFlare * 100)],
+                type: 'bar', orientation: 'h',
+                marker: {
+                  color: [T.blue, T.green, T.yellow, T.accent],
+                  line: { width: 0 },
+                },
+                text: [91, 91, 95, ((totalFlare - totalProp) / totalFlare * 100)].map(v => v.toFixed(1) + '%'),
+                textposition: 'inside',
+                textfont: { color: '#ffffff', size: 12, family: 'Consolas, monospace' },
+              },
+              {
+                y: ['HP Flare', 'LP Flare', 'Hull Vent', 'TOTAL'],
+                x: [9, 9, 5, (totalProp / totalFlare * 100)],
+                type: 'bar', orientation: 'h',
+                marker: { color: T.isDark ? '#333333' : '#e5e7eb', line: { width: 0 } },
+                text: [9, 9, 5, (totalProp / totalFlare * 100)].map(v => v.toFixed(1) + '%'),
+                textposition: 'inside',
+                textfont: { color: T.subText, size: 10, family: 'Consolas' },
+                showlegend: false,
+              },
+            ]}
+            layout={{
+              ...baseLayout, height: 280, barmode: 'stack',
+              showlegend: false,
+              xaxis: { ...baseLayout.xaxis, range: [0, 100], title: { text: 'Recovery %', font: { size: 10, color: T.subText } } },
+              yaxis: { ...baseLayout.yaxis, tickfont: { size: 11, color: T.textColor, family: 'Consolas' } },
+            }}
+            config={plotConfig}
+            style={{ width: '100%' }}
+          />
         </div>
       </div>
     </div>

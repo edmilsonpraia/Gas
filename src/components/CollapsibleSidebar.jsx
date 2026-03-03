@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Menu } from 'lucide-react';
+import { ChevronLeft20Regular, ChevronRight20Regular, Navigation24Regular } from '@fluentui/react-icons';
 import Sidebar from './Sidebar';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -15,7 +15,7 @@ export default function CollapsibleSidebar({ onDataChange }) {
       {/* Sidebar */}
       <div
         className={`transition-all duration-300 ease-in-out ${
-          isCollapsed ? 'w-0' : 'w-80'
+          isCollapsed ? 'w-0' : 'w-64'
         } overflow-hidden`}
       >
         <Sidebar onDataChange={onDataChange} />
@@ -25,19 +25,19 @@ export default function CollapsibleSidebar({ onDataChange }) {
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className={`fixed top-20 ${
-          isCollapsed ? 'left-0' : 'left-80'
-        } z-50 bg-primary-600 text-white p-2 rounded-r-lg shadow-lg hover:bg-primary-700 transition-all duration-300`}
+          isCollapsed ? 'left-0' : 'left-64'
+        } z-50 bg-vs-accent text-white p-2 rounded-r-lg shadow-lg hover:bg-primary-600 transition-all duration-300`}
         title={isCollapsed ? t.expandSidebar : t.collapseSidebar}
       >
-        {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        {isCollapsed ? <ChevronRight20Regular /> : <ChevronLeft20Regular />}
       </button>
 
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 bg-primary-600 text-white p-4 rounded-full shadow-strong hover:bg-primary-700"
+        className="lg:hidden fixed bottom-4 right-4 z-50 bg-vs-accent text-white p-4 rounded-full shadow-medium hover:bg-primary-600"
       >
-        <Menu size={24} />
+        <Navigation24Regular />
       </button>
     </>
   );

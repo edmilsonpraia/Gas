@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
-import { Play, RotateCcw, TrendingUp } from 'lucide-react';
+import { Play20Regular, ArrowCounterclockwise20Regular, ArrowTrendingRegular } from '@fluentui/react-icons';
 import { NumberFormatter } from '../utils/unitConverter';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -154,11 +154,11 @@ export default function MonteCarloSimulation({ data }) {
   return (
     <div className="space-y-6">
       {/* Header e Controles */}
-      <div className="card bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="card bg-white border-l-2 border-l-vs-keyword">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-              <TrendingUp size={24} className="text-purple-600" />
+              <ArrowTrendingRegular className="text-purple-600 text-2xl" />
               {t.monteCarloTitle}
             </h3>
             <p className="text-sm text-gray-600">
@@ -194,12 +194,12 @@ export default function MonteCarloSimulation({ data }) {
             >
               {simulating ? (
                 <>
-                  <RotateCcw size={18} className="animate-spin" />
+                  <ArrowCounterclockwise20Regular className="animate-spin" />
                   {t.simulating}
                 </>
               ) : (
                 <>
-                  <Play size={18} />
+                  <Play20Regular />
                   {t.execute}
                 </>
               )}

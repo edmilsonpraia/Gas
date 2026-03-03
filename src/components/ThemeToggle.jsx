@@ -1,5 +1,5 @@
 import React from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { WeatherMoon20Regular, WeatherSunny20Regular } from '@fluentui/react-icons';
 
 /**
  * Toggle de tema Dark/Light Mode
@@ -10,9 +10,9 @@ export default function ThemeToggle({ isDark, onToggle }) {
       onClick={onToggle}
       className={`
         relative w-16 h-8 rounded-full transition-all duration-300 shadow-md
-        ${isDark ? 'bg-gray-700' : 'bg-primary-500'}
+        ${isDark ? 'bg-gray-700' : 'bg-vs-accent'}
         hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2
-        ${isDark ? 'focus:ring-gray-500' : 'focus:ring-primary-400'}
+        ${isDark ? 'focus:ring-gray-500' : 'focus:ring-vs-accent'}
       `}
       title={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
     >
@@ -25,9 +25,9 @@ export default function ThemeToggle({ isDark, onToggle }) {
         `}
       >
         {isDark ? (
-          <Moon size={14} className="text-gray-700" />
+          <WeatherMoon20Regular className="text-gray-700 w-3.5 h-3.5" />
         ) : (
-          <Sun size={14} className="text-yellow-500" />
+          <WeatherSunny20Regular className="text-yellow-500 w-3.5 h-3.5" />
         )}
       </div>
 

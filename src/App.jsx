@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Activity,
-  Download,
-  FileText,
-  Calculator,
-  Microscope,
-  TrendingDown,
-  LineChart,
-  Flame
-} from 'lucide-react';
+  PulseSquare24Regular,
+  ArrowDownload20Regular,
+  Document24Regular,
+  Calculator24Regular,
+  Beaker24Regular,
+  ArrowTrendingDown24Regular,
+  DataLine24Regular,
+  Fire24Regular,
+} from '@fluentui/react-icons';
 import CollapsibleSidebar from './components/CollapsibleSidebar';
-import ScenarioComparison from './components/ScenarioComparison';
 import TechnicalCalculator from './components/TechnicalCalculator';
 import TechnicalAnalysis from './components/TechnicalAnalysis';
 import ThemeToggle from './components/ThemeToggle';
@@ -18,6 +17,9 @@ import LanguageToggle from './components/LanguageToggle';
 import MethodologyFormulas from './components/MethodologyFormulas';
 import FlareEmissionForecast from './components/FlareEmissionForecast';
 import ComparativeCharts from './components/ComparativeCharts';
+import SystemDiagram from './components/SystemDiagram';
+import ReportsPanel from './components/ReportsPanel';
+import AIAssistant from './components/AIAssistant';
 import { EmissionCalculator } from './utils/calculations';
 import { useLanguage } from './contexts/LanguageContext';
 import * as XLSX from 'xlsx';
@@ -167,12 +169,12 @@ function App() {
   };
 
   const tabs = [
-    { id: 'overview', label: t.dashboard, icon: Activity },
-    { id: 'calculator', label: t.calculator, icon: Calculator },
-    { id: 'analysis', label: t.analysis, icon: Microscope },
-    { id: 'charts', label: t.charts, icon: TrendingDown },
-    { id: 'advanced', label: t.advanced, icon: LineChart },
-    { id: 'reports', label: t.reports, icon: FileText }
+    { id: 'overview', label: t.dashboard, icon: PulseSquare24Regular },
+    { id: 'calculator', label: t.calculator, icon: Calculator24Regular },
+    { id: 'analysis', label: t.analysis, icon: Beaker24Regular },
+{ id: 'charts', label: t.charts, icon: ArrowTrendingDown24Regular },
+    { id: 'advanced', label: t.advanced, icon: DataLine24Regular },
+    { id: 'reports', label: t.reports, icon: Document24Regular }
   ];
 
   return (
@@ -183,18 +185,25 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg">
+        <header
+          className="transition-colors duration-300"
+          style={{
+            backgroundColor: isDarkMode ? '#323233' : '#ffffff',
+            color: isDarkMode ? '#ffffff' : '#1e1e1e',
+            borderBottom: isDarkMode ? 'none' : '1px solid #e5e5e5',
+          }}
+        >
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Flame size={24} />
+                  <Fire24Regular style={{ color: isDarkMode ? '#ffffff' : '#007acc' }} />
                   <h1 className="text-xl font-bold">{t.appTitle}</h1>
                 </div>
-                <p className="text-primary-100 text-sm">
+                <p className="text-sm" style={{ color: isDarkMode ? '#cccccc' : '#6b7280' }}>
                   {t.appSubtitle}
                 </p>
-                <p className="text-primary-200 text-xs mt-0.5">
+                <p className="text-xs mt-0.5" style={{ color: isDarkMode ? '#999999' : '#9ca3af' }}>
                   {t.appFooter}
                 </p>
               </div>
@@ -203,16 +212,24 @@ function App() {
                 <ThemeToggle isDark={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} />
                 <button
                   onClick={() => handleExport('excel')}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  style={{
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#f3f4f6',
+                    color: isDarkMode ? '#ffffff' : '#1f2937',
+                  }}
                 >
-                  <Download size={18} />
+                  <ArrowDownload20Regular />
                   <span className="text-sm font-medium">{t.exportExcel}</span>
                 </button>
                 <button
                   onClick={() => handleExport('pdf')}
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg flex items-center gap-2 transition-colors"
+                  className="px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                  style={{
+                    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#f3f4f6',
+                    color: isDarkMode ? '#ffffff' : '#1f2937',
+                  }}
                 >
-                  <Download size={18} />
+                  <ArrowDownload20Regular />
                   <span className="text-sm font-medium">{t.exportPDF}</span>
                 </button>
               </div>
@@ -220,20 +237,29 @@ function App() {
           </div>
 
           {/* Tabs */}
-          <div className="px-8 flex gap-1 border-t border-primary-500/30">
+          <div
+            className="px-8 flex gap-1"
+            style={{ borderTop: `1px solid ${isDarkMode ? '#3c3c3c' : '#e5e5e5'}` }}
+          >
             {tabs.map(tab => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-3 flex items-center gap-2 font-medium border-b-2 transition-all ${
-                    activeTab === tab.id
-                      ? 'text-white border-white bg-white/10'
-                      : 'text-primary-200 border-transparent hover:text-white hover:bg-white/5'
-                  }`}
+                  className="px-6 py-3 flex items-center gap-2 font-medium border-b-2 transition-all"
+                  style={{
+                    color: isActive
+                      ? (isDarkMode ? '#ffffff' : '#007acc')
+                      : (isDarkMode ? '#858585' : '#6b7280'),
+                    borderBottomColor: isActive ? '#007acc' : 'transparent',
+                    backgroundColor: isActive
+                      ? (isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,122,204,0.05)')
+                      : 'transparent',
+                  }}
                 >
-                  <Icon size={18} />
+                  <Icon className="w-[18px] h-[18px]" />
                   {tab.label}
                 </button>
               );
@@ -244,48 +270,36 @@ function App() {
         {/* Content */}
         <main className="flex-1 overflow-y-auto p-5">
           {activeTab === 'overview' && (
-            <ScenarioComparison data={data} />
+            <div className="animate-fade-in">
+              <SystemDiagram data={data} />
+            </div>
           )}
 
           {activeTab === 'charts' && (
             <div className="space-y-4 animate-fade-in">
-              {/* Header Compacto */}
-              <div className="bg-white border-b-2 border-blue-600 px-6 py-4 rounded-lg shadow-sm">
-                <div className="flex items-center gap-3">
-                  <TrendingDown size={24} className="text-blue-600" />
+              {/* Header */}
+              <div className="card border-l-2 border-l-vs-accent">
+                <div className="flex items-center gap-2">
+                  <ArrowTrendingDown24Regular className="text-vs-accent" />
                   <div>
-                    <h2 className="text-xl font-bold text-gray-900">{t.chartsTitle}</h2>
-                    <p className="text-xs text-gray-600">{t.chartsSubtitle}</p>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t.chartsTitle}</h2>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      MAGNOLIA FPSO — {t.chartsSubtitle}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Gráficos Comparativos */}
+              {/* Comparative Charts */}
               <ComparativeCharts data={data} />
 
-              {/* Previsão ML - Largura Total */}
-              <div className="card border-t-4 border-blue-600">
-                <FlareEmissionForecast data={data} />
-              </div>
+              {/* ML Forecast */}
+              <FlareEmissionForecast data={data} />
             </div>
           )}
 
           {activeTab === 'advanced' && (
-            <div className="space-y-6 animate-fade-in">
-              {/* Header */}
-              <div className="card bg-gradient-to-r from-purple-50 to-indigo-50">
-                <div className="flex items-center gap-3">
-                  <LineChart size={32} className="text-purple-600" />
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900">{t.advancedTitle}</h2>
-                    <p className="text-gray-600">{t.advancedSubtitle}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Metodologia e Fórmulas */}
-              <MethodologyFormulas data={data} />
-            </div>
+            <MethodologyFormulas data={data} />
           )}
 
           {activeTab === 'calculator' && (
@@ -297,42 +311,13 @@ function App() {
           )}
 
           {activeTab === 'reports' && (
-            <div className="card animate-fade-in">
-              <h2 className="card-header">{t.reportsTitle}</h2>
-              <div className="space-y-4">
-                <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                  <p className="text-sm text-green-800">
-                    {t.reportsMessage}
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button
-                    onClick={() => handleExport('excel')}
-                    className="btn-primary flex items-center justify-center gap-2"
-                  >
-                    <Download size={18} />
-                    {t.exportExcelBtn}
-                  </button>
-                  <button
-                    onClick={() => handleExport('json')}
-                    className="btn-secondary flex items-center justify-center gap-2"
-                  >
-                    <Download size={18} />
-                    {t.exportJSONBtn}
-                  </button>
-                  <button
-                    onClick={() => handleExport('pdf')}
-                    className="btn-primary flex items-center justify-center gap-2"
-                  >
-                    <Download size={18} />
-                    {t.exportPDFBtn}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ReportsPanel data={data} onExport={handleExport} />
           )}
         </main>
       </div>
+
+      {/* AI Assistant */}
+      <AIAssistant data={data} isDarkMode={isDarkMode} />
     </div>
   );
 }

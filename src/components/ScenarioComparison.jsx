@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, TrendingDown, Leaf, ChevronDown, ChevronUp } from 'lucide-react';
+import { Warning16Regular, ArrowTrendingDown16Regular, LeafOne16Regular, ChevronDown16Regular, ChevronUp16Regular } from '@fluentui/react-icons';
 import { NumberFormatter } from '../utils/unitConverter';
 import { EmissionCalculator } from '../utils/calculations';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -29,45 +29,45 @@ export default function ScenarioComparison({ data }) {
       {/* Métricas Principais - Compacto */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Emissões GEE - Antes */}
-        <div className="bg-gradient-to-br from-red-600 to-red-700 text-white rounded-lg p-4 shadow-md">
+        <div className="bg-white rounded border border-vs-light-border border-l-4 border-l-[#f44747] p-4">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={16} />
-            <h3 className="text-xs font-semibold">{t.ghgEmissionsBefore}</h3>
+            <Warning16Regular className="text-[#f44747]" />
+            <h3 className="text-xs font-semibold text-gray-800">{t.ghgEmissionsBefore}</h3>
           </div>
-          <p className="text-2xl font-bold mb-1">
+          <p className="text-2xl font-bold mb-1 text-[#f44747]">
             {NumberFormatter.format(cenarioAtual.emissoes_total, 0)}
           </p>
-          <p className="text-xs text-red-100">{t.tco2eq} - {t.current}</p>
+          <p className="text-xs text-gray-500">{t.tco2eq} - {t.current}</p>
         </div>
 
         {/* Emissões GEE - Depois */}
-        <div className="bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-lg p-4 shadow-md">
+        <div className="bg-white rounded border border-vs-light-border border-l-4 border-l-[#4ec9b0] p-4">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingDown size={16} />
-            <h3 className="text-xs font-semibold">{t.ghgEmissionsAfter}</h3>
+            <ArrowTrendingDown16Regular className="text-[#4ec9b0]" />
+            <h3 className="text-xs font-semibold text-gray-800">{t.ghgEmissionsAfter}</h3>
           </div>
-          <p className="text-2xl font-bold mb-1">
+          <p className="text-2xl font-bold mb-1 text-[#4ec9b0]">
             {NumberFormatter.format(cenarioProposto.emissoes_total, 0)}
           </p>
-          <p className="text-xs text-green-100">{t.tco2eq} - {t.proposed}</p>
+          <p className="text-xs text-gray-500">{t.tco2eq} - {t.proposed}</p>
         </div>
 
         {/* Gás Queimado */}
-        <div className="bg-gradient-to-br from-orange-600 to-red-600 text-white rounded-lg p-4 shadow-md">
-          <h3 className="text-xs font-semibold mb-2">🔥 {t.gasBurned}</h3>
-          <p className="text-2xl font-bold mb-1">
+        <div className="bg-white rounded border border-vs-light-border border-l-4 border-l-[#ce9178] p-4">
+          <h3 className="text-xs font-semibold mb-2 text-gray-800">🔥 {t.gasBurned}</h3>
+          <p className="text-2xl font-bold mb-1 text-[#ce9178]">
             {NumberFormatter.format(gasQueimatoFlares / 1000, 1)}
           </p>
-          <p className="text-xs text-orange-100">K{t.sm3d} - {t.currentFlares}</p>
+          <p className="text-xs text-gray-500">K{t.sm3d} - {t.currentFlares}</p>
         </div>
 
         {/* Gás Recuperado */}
-        <div className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-lg p-4 shadow-md">
-          <h3 className="text-xs font-semibold mb-2">♻️ {t.gasRecovered}</h3>
-          <p className="text-2xl font-bold mb-1">
+        <div className="bg-white rounded border border-vs-light-border border-l-4 border-l-vs-accent p-4">
+          <h3 className="text-xs font-semibold mb-2 text-gray-800">♻️ {t.gasRecovered}</h3>
+          <p className="text-2xl font-bold mb-1 text-vs-accent">
             {NumberFormatter.format(gasRecuperadoFlares / 1000, 1)}
           </p>
-          <p className="text-xs text-blue-100">K{t.sm3d} - {t.proposed}</p>
+          <p className="text-xs text-gray-500">K{t.sm3d} - {t.proposed}</p>
         </div>
       </div>
 
@@ -75,9 +75,9 @@ export default function ScenarioComparison({ data }) {
       <div className="flex justify-center">
         <button
           onClick={() => setShowSpecs(!showSpecs)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-vs-accent hover:bg-primary-600 text-white rounded text-xs font-medium transition-colors"
         >
-          {showSpecs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {showSpecs ? <ChevronUp16Regular /> : <ChevronDown16Regular />}
           {showSpecs ? t.hideSpecifications : t.showSpecifications}
         </button>
       </div>
@@ -178,32 +178,9 @@ export default function ScenarioComparison({ data }) {
         {/* Cenário Atual */}
         <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
           <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-            <AlertTriangle className="text-red-600" size={16} />
+            <Warning16Regular className="text-[#f44747]" />
             {t.currentScenarioTitle}
           </h3>
-
-          {/* Imagem do Sistema Atual */}
-          <div className="mb-2">
-            <img
-              src="/01.jpeg"
-              alt={`${t.currentSystem} - ${t.conventionalMethod}`}
-              className="w-full rounded border border-gray-300"
-            />
-            <p className="text-xs text-gray-500 text-center mt-1">
-              {t.currentSystem} - {t.conventionalMethod}
-            </p>
-          </div>
-
-          {/* Legenda Técnica */}
-          <div className="bg-gray-50 p-2 rounded mb-2 text-xs">
-            <h5 className="font-semibold text-gray-700 mb-1">{t.legend}:</h5>
-            <ul className="space-y-0.5 text-gray-600">
-              <li>• <strong>Sep. Trifásico LP:</strong> Separa óleo, água e gás</li>
-              <li>• <strong>Hull Vent Blower:</strong> Ventilação do casco</li>
-              <li>• <strong>KO Drum:</strong> Separador antes dos flares</li>
-              <li>• <strong>Flares LP/HP:</strong> Queima de gás</li>
-            </ul>
-          </div>
 
           {/* Emissões por Fonte */}
           <div className="space-y-1">
@@ -232,21 +209,9 @@ export default function ScenarioComparison({ data }) {
         {/* Cenário Proposto */}
         <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
           <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-            <Leaf className="text-green-600" size={16} />
+            <LeafOne16Regular className="text-[#4ec9b0]" />
             {t.proposedScenarioTitle}
           </h3>
-
-          {/* Imagem do Sistema Proposto */}
-          <div className="mb-2">
-            <img
-              src="/02.jpeg"
-              alt={`${t.proposedSystem} - ${t.gasRecovery}`}
-              className="w-full rounded border border-green-500"
-            />
-            <p className="text-xs text-gray-500 text-center mt-1">
-              {t.proposedSystem} - {t.gasRecovery}
-            </p>
-          </div>
 
           {/* Benefícios */}
           <div className="bg-green-50 p-2 rounded mb-2">
@@ -284,7 +249,7 @@ export default function ScenarioComparison({ data }) {
           <div className="mt-2">
             <div className="bg-green-50 border-l-2 border-green-500 p-2 rounded">
               <div className="flex items-center gap-1 mb-1">
-                <TrendingDown size={14} className="text-green-600" />
+                <ArrowTrendingDown16Regular className="text-green-600" />
                 <span className="font-semibold text-green-900 text-xs">{t.reduction}</span>
               </div>
               <p className="text-lg font-bold text-green-700">
@@ -301,7 +266,7 @@ export default function ScenarioComparison({ data }) {
       {/* Equivalências Ambientais - Compacto */}
       <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
-          <Leaf className="text-green-600" size={16} />
+          <LeafOne16Regular className="text-[#4ec9b0]" />
           {t.environmentalImpact}
         </h3>
 

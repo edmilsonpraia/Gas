@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ArrowTrendingRegular, ArrowTrendingDown16Regular, Subtract16Regular } from '@fluentui/react-icons';
 import { NumberFormatter } from '../utils/unitConverter';
 
 /**
@@ -15,20 +15,20 @@ export default function MetricCard({
   decimals = 2
 }) {
   const getDeltaColor = () => {
-    if (delta === null || delta === 0) return 'text-gray-500';
-    return delta > 0 ? 'text-green-600' : 'text-red-600';
+    if (delta === null || delta === 0) return 'text-vs-text-secondary';
+    return delta > 0 ? 'text-[#4ec9b0]' : 'text-[#f44747]';
   };
 
   const getDeltaIcon = () => {
-    if (delta === null || delta === 0) return <Minus size={16} />;
-    return delta > 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+    if (delta === null || delta === 0) return <Subtract16Regular />;
+    return delta > 0 ? <ArrowTrendingRegular className="w-4 h-4" /> : <ArrowTrendingDown16Regular />;
   };
 
   return (
     <div className="metric-card">
       <div className="flex items-start justify-between mb-3">
         <div className="metric-label">{label}</div>
-        {Icon && <Icon size={20} className="text-primary-600 opacity-60" />}
+        {Icon && <Icon size={20} className="text-vs-accent opacity-60" />}
       </div>
 
       <div className="metric-value">

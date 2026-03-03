@@ -1,637 +1,436 @@
-import React, { useState } from 'react';
-import { CheckCircle, TrendingDown, Leaf, BarChart3 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Beaker24Regular,
+  ChartMultiple16Regular,
+  ArrowTrendingDown16Regular,
+  CheckmarkCircle16Regular
+} from '@fluentui/react-icons';
 import { NumberFormatter } from '../utils/unitConverter';
 import { EmissionCalculator } from '../utils/calculations';
 import { useLanguage } from '../contexts/LanguageContext';
 
-/**
- * Análise Técnica - Sistema de Recuperação de Gás
- */
+/* ===== Mini SVG Sub-Components (matching SystemDiagram style) ===== */
+
+const MiniVessel = ({ x, y, w, h, label, color = '#858585' }) => (
+  <g transform={`translate(${x},${y})`}>
+    <ellipse cx={h * 0.3} cy={h / 2} rx={h * 0.3} ry={h / 2} fill="none" stroke={color} strokeWidth="1.2" />
+    <rect x={h * 0.3} y={0} width={w - h * 0.6} height={h} fill="none" stroke={color} strokeWidth="1.2" />
+    <ellipse cx={w - h * 0.3} cy={h / 2} rx={h * 0.3} ry={h / 2} fill="none" stroke={color} strokeWidth="1.2" />
+    {label && <text x={w / 2} y={h / 2 + 3} textAnchor="middle" fontSize="7" fontWeight="600" fill={color}>{label}</text>}
+  </g>
+);
+
+const MiniCompressor = ({ x, y, label, color = '#858585' }) => (
+  <g transform={`translate(${x},${y})`}>
+    <circle r="14" fill="none" stroke={color} strokeWidth="1.2" />
+    <polygon points="-6,-8 8,0 -6,8" fill="none" stroke={color} strokeWidth="1" />
+    {label && <text x="0" y="24" textAnchor="middle" fontSize="6" fontWeight="600" fill={color}>{label}</text>}
+  </g>
+);
+
+const MiniFlare = ({ x, y, label, color = '#f44747' }) => (
+  <g transform={`translate(${x},${y})`}>
+    <line x1="0" y1="0" x2="0" y2="-28" stroke={color} strokeWidth="1.5" />
+    <path d="M-5,-28 Q0,-40 5,-28" fill={color} opacity="0.7" />
+    <path d="M-3,-30 Q0,-38 3,-30" fill="#ff6b35" opacity="0.8" />
+    {label && <text x="0" y="12" textAnchor="middle" fontSize="6" fontWeight="600" fill={color}>{label}</text>}
+  </g>
+);
+
+const MiniBlower = ({ x, y, label, color = '#858585' }) => (
+  <g transform={`translate(${x},${y})`}>
+    <rect x="-14" y="-10" width="28" height="20" rx="3" fill="none" stroke={color} strokeWidth="1.2" />
+    <text x="0" y="4" textAnchor="middle" fontSize="7" fontWeight="700" fill={color}>B</text>
+    {label && <text x="0" y="22" textAnchor="middle" fontSize="6" fontWeight="600" fill={color}>{label}</text>}
+  </g>
+);
+
+/* ===== Main Component ===== */
+
 export default function TechnicalAnalysis({ data }) {
   const { t } = useLanguage();
   const [showMonteCarlo, setShowMonteCarlo] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsDark(document.body.classList.contains('dark'));
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  // --- Data extraction (same as SystemDiagram) ---
+  const hpFlare = data?.monitoring?.totals?.totalHP || 7975;
+  const lpFlare = data?.monitoring?.totals?.totalLP || 19925;
+  const hullVent = data?.monitoring?.totals?.totalHull || 40000;
+  const totalFlaring = data?.monitoring?.totals?.totalFlaring || 67900;
+  const hpComp = data?.compressors?.hp || { vazao: 250000, pressao: 151, temperatura: 80 };
+  const lpComp = data?.compressors?.lp || { vazao: 200000, pressao: 10, temperatura: 60 };
+  const blower = data?.compressors?.blower || { vazao: 250000, pressao: 1.913, temperatura: 50 };
 
   const cenarioAtual = EmissionCalculator.calcularCenarioAtual(data);
   const cenarioProposto = EmissionCalculator.calcularCenarioProposto(data, 0.91);
 
-  const vazaoLPFlare = data.monitoring?.totals?.totalLP || 27900;
-  const vazaoHPFlare = data.monitoring?.totals?.totalHP || 40000;
-  const vazaoHull = 0; // Hull vent (sem dados)
+  // Recovery rates
+  const taxaLP = 91, taxaHP = 91, taxaHull = 95;
+  const gasLPRec = lpFlare * (taxaLP / 100);
+  const gasHPRec = hpFlare * (taxaHP / 100);
+  const gasHullRec = hullVent * (taxaHull / 100);
+  const totalRecovered = gasLPRec + gasHPRec + gasHullRec;
+  const totalResidual = (lpFlare - gasLPRec) + (hpFlare - gasHPRec) + (hullVent - gasHullRec);
+  const recoveryRate = totalFlaring > 0 ? ((totalRecovered / totalFlaring) * 100) : 0;
 
-  // Taxas de recuperação
-  const taxaRecuperacaoHull = 95;
-  const taxaReducaoLP = 91;
-  const taxaReducaoHP = 91;
-
-  // Cálculos de gás recuperado
-  const gasHullCapturado = vazaoHull * (taxaRecuperacaoHull / 100);
-  const gasLPRecuperado = vazaoLPFlare * (taxaReducaoLP / 100);
-  const gasHPRecuperado = vazaoHPFlare * (taxaReducaoHP / 100);
-  const gasTotalRecuperado = gasHullCapturado + gasLPRecuperado + gasHPRecuperado;
-
-  // Vazões residuais
-  const vazaoHullResidual = vazaoHull * (1 - taxaRecuperacaoHull / 100);
-  const vazaoLPResidual = vazaoLPFlare * (1 - taxaReducaoLP / 100);
-  const vazaoHPResidual = vazaoHPFlare * (1 - taxaReducaoHP / 100);
-  const totalEmitido = vazaoLPResidual + vazaoHPResidual + vazaoHullResidual;
-
-  // Redução de emissões
   const reducaoEmissoes = cenarioAtual.emissoes_total - cenarioProposto.emissoes_total;
-  const reducaoPercentual = (reducaoEmissoes / cenarioAtual.emissoes_total) * 100;
+  const reducaoPercentual = cenarioAtual.emissoes_total > 0 ? (reducaoEmissoes / cenarioAtual.emissoes_total) * 100 : 0;
 
-  // Taxa global de recuperação
-  const totalFlareBase = vazaoLPFlare + vazaoHPFlare;
-  const percentualRecuperado = (cenarioProposto.vazao_recuperada / totalFlareBase * 100);
-
-  // Simulação Monte Carlo - Três Cenários Técnicos
-  const calcularCenarioMonteCarlo = (taxaHull, taxaLP, taxaHP) => {
-    const gasHull = vazaoHull * (taxaHull / 100);
-    const gasLP = vazaoLPFlare * (taxaLP / 100);
-    const gasHP = vazaoHPFlare * (taxaHP / 100);
-    const gasTotal = gasHull + gasLP + gasHP;
-
-    const residualHull = vazaoHull * (1 - taxaHull / 100);
-    const residualLP = vazaoLPFlare * (1 - taxaLP / 100);
-    const residualHP = vazaoHPFlare * (1 - taxaHP / 100);
-
-    // Cálculo simplificado de emissões (usando fatores do EmissionCalculator)
-    const emissoesLP = residualLP * 365 * 2.75 / 1000;
-    const emissoesHP = residualHP * 365 * 2.75 / 1000;
-    const emissoesHull = residualHull * 365 * 0.679 / 1000;
-    const emissoesTotal = emissoesLP + emissoesHP + emissoesHull;
-
-    const reducaoEmissoes = cenarioAtual.emissoes_total - emissoesTotal;
-    const taxaRecuperacao = (gasTotal / (vazaoLPFlare + vazaoHPFlare)) * 100;
-
-    return { gasTotal, emissoesTotal, reducaoEmissoes, taxaRecuperacao };
+  // Monte Carlo
+  const calcMC = (tH, tL, tHP) => {
+    const gH = hullVent * (tH / 100), gL = lpFlare * (tL / 100), gHP = hpFlare * (tHP / 100);
+    const total = gH + gL + gHP;
+    const rH = hullVent - gH, rL = lpFlare - gL, rHP = hpFlare - gHP;
+    const eL = rL * 365 * 2.75 / 1000, eHP = rHP * 365 * 2.75 / 1000, eH = rH * 365 * 0.679 / 1000;
+    const eTotal = eL + eHP + eH;
+    return { total, eTotal, reducao: cenarioAtual.emissoes_total - eTotal, rate: (total / totalFlaring * 100) };
   };
 
-  const cenariosProbabilisticos = {
-    otimista: {
-      nome: t.optimistic,
-      taxaHull: 98,
-      taxaLP: 95,
-      taxaHP: 95,
-      probabilidade: 15,
-      cor: 'green',
-      ...calcularCenarioMonteCarlo(98, 95, 95)
-    },
-    realista: {
-      nome: t.realistic,
-      taxaHull: 95,
-      taxaLP: 91,
-      taxaHP: 91,
-      probabilidade: 70,
-      cor: 'blue',
-      ...calcularCenarioMonteCarlo(95, 91, 91)
-    },
-    pessimista: {
-      nome: t.pessimistic,
-      taxaHull: 90,
-      taxaLP: 85,
-      taxaHP: 85,
-      probabilidade: 15,
-      cor: 'orange',
-      ...calcularCenarioMonteCarlo(90, 85, 85)
-    }
+  const mc = {
+    pessimista: { ...calcMC(90, 85, 85), prob: 15, tH: 90, tL: 85, tHP: 85 },
+    realista:   { ...calcMC(95, 91, 91), prob: 70, tH: 95, tL: 91, tHP: 91 },
+    otimista:   { ...calcMC(98, 95, 95), prob: 15, tH: 98, tL: 95, tHP: 95 },
   };
+
+  // Theme
+  const bg = isDark ? '#1e1e1e' : '#ffffff';
+  const bgCard = isDark ? '#252526' : '#f8f8f8';
+  const border = isDark ? '#3e3e3e' : '#e5e7eb';
+  const txt = isDark ? '#d4d4d4' : '#1f2937';
+  const txtS = isDark ? '#858585' : '#6b7280';
+  const accent = '#007acc';
+  const fmt = (n) => Math.round(n).toLocaleString('pt-BR');
+
+  const C = { flare: '#f44747', gas: '#4ec9b0', recovery: '#e88a3a', accent: '#007acc', warn: '#dcdcaa', purple: '#c586c0' };
 
   return (
-    <div className="space-y-3 animate-fade-in">
+    <div className="animate-fade-in space-y-4">
       {/* Header */}
-      <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm">
-        <div className="flex items-center gap-2 mb-1">
-          <CheckCircle size={16} className="text-green-600" />
-          <h2 className="text-sm font-bold text-green-900">{t.proposedMethod}</h2>
-        </div>
-        <p className="text-xs text-gray-700">
-          {t.integratedSystem}
-        </p>
-      </div>
-
-      {/* Descrição do Sistema */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.systemDescription}</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-gray-800 mb-2">{t.technicalInnovations}</h4>
-            <ul className="space-y-1 text-xs text-gray-700">
-              <li>• {t.hullVentCapture} ({taxaRecuperacaoHull}%)</li>
-              <li>• {t.gasCompression}</li>
-              <li>• {t.networkIntegration}</li>
-              <li>• {t.lpFlareReduction} {taxaReducaoLP}%</li>
-              <li>• {t.hpFlareReduction} {taxaReducaoHP}%</li>
-            </ul>
-          </div>
-
-          <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-gray-800 mb-2">{t.newEquipment}</h4>
-            <ul className="space-y-1 text-xs text-gray-700">
-              <li>• {t.hullVentCapture}</li>
-              <li>• {t.recoveryCompressor}</li>
-              <li>• {t.interconnectionPiping}</li>
-              <li>• {t.instrumentationControl}</li>
-              <li>• {t.gasTreatmentSystem}</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Performance do Sistema */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.systemPerformance}</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-600 mb-1">{t.gasRecovered}</p>
-            <h3 className="text-lg font-bold text-green-700">
-              {NumberFormatter.format(gasTotalRecuperado / 1000, 1)}
-            </h3>
-            <p className="text-xs text-green-600 font-semibold">KSm³/d</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {NumberFormatter.format(percentualRecuperado, 1)}% do flare
-            </p>
-          </div>
-
-          <div className="bg-white border border-blue-200 rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-600 mb-1">{t.lpFlareReduction}</p>
-            <h3 className="text-lg font-bold text-blue-700">
-              {NumberFormatter.format(gasLPRecuperado, 0)}
-            </h3>
-            <p className="text-xs text-blue-600 font-semibold">Sm³/d</p>
-            <p className="text-xs text-red-600 mt-1 font-semibold">
-              -{taxaReducaoLP}%
-            </p>
-          </div>
-
-          <div className="bg-white border border-purple-200 rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-600 mb-1">{t.hpFlareReduction}</p>
-            <h3 className="text-lg font-bold text-purple-700">
-              {NumberFormatter.format(gasHPRecuperado, 0)}
-            </h3>
-            <p className="text-xs text-purple-600 font-semibold">Sm³/d</p>
-            <p className="text-xs text-red-600 mt-1 font-semibold">
-              -{taxaReducaoHP}%
-            </p>
-          </div>
-
-          <div className="bg-white border border-orange-200 rounded-lg p-3 shadow-sm">
-            <p className="text-xs text-gray-600 mb-1">{t.globalRate}</p>
-            <h3 className="text-lg font-bold text-orange-700">
-              {NumberFormatter.format(percentualRecuperado, 1)}
-            </h3>
-            <p className="text-xs text-orange-600 font-semibold">%</p>
-            <p className="text-xs text-gray-500 mt-1">
-              {t.percentRecovered}
+      <div className="card border-l-2 border-l-vs-accent">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <Beaker24Regular className="text-vs-accent" />
+              <h2 className="text-xl font-bold" style={{ color: txt }}>{t.analysis}</h2>
+            </div>
+            <p className="text-xs mt-0.5" style={{ color: txtS }}>
+              MAGNOLIA FPSO — Gas Recovery System — Performance & Emissions Analysis
             </p>
           </div>
         </div>
       </div>
 
-      {/* Balanço de Massa */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.massBalance}</h3>
+      {/* Mini Process Flow Diagram */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-4 py-2 border-b" style={{ borderColor: border }}>
+          <span className="text-xs font-semibold" style={{ color: txtS }}>PROCESS FLOW — RECOVERY OVERVIEW</span>
+        </div>
+        <div className="flex justify-center p-4" style={{ backgroundColor: bg }}>
+          <svg viewBox="0 0 700 160" className="w-full max-w-3xl" style={{ maxHeight: 160 }}>
+            {/* Sources */}
+            <MiniFlare x={80} y={60} label="HP Flare" color={C.flare} />
+            <MiniFlare x={180} y={60} label="LP Flare" color={C.flare} />
+            <MiniVessel x={250} y={45} w={60} h={30} label="COT" color={txtS} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-green-900 mb-2 flex items-center gap-1">
-              <CheckCircle size={14} />
-              {t.gasRecoveredLabel}
-            </h4>
-            <div className="space-y-1 text-xs text-gray-700">
-              <div className="flex justify-between">
-                <span>{t.lpFlareHullVent} ({taxaReducaoLP}%):</span>
-                <span className="font-semibold">{NumberFormatter.format(gasHPRecuperado + gasHullCapturado, 0)} Sm³/d</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t.hpFlareRecovery} ({taxaReducaoHP}%):</span>
-                <span className="font-semibold">{NumberFormatter.format(gasLPRecuperado, 0)} Sm³/d</span>
-              </div>
-              <div className="border-t border-green-300 pt-1 mt-1">
-                <div className="flex justify-between font-bold text-green-800">
-                  <span>{t.totalRecovered}:</span>
-                  <span className="text-sm">{NumberFormatter.format(gasTotalRecuperado, 0)} Sm³/d</span>
+            {/* Arrows to recovery */}
+            <line x1="95" y1="60" x2="130" y2="90" stroke={C.recovery} strokeWidth="1.5" strokeDasharray="4,2" markerEnd="url(#arA)" />
+            <line x1="195" y1="60" x2="230" y2="90" stroke={C.recovery} strokeWidth="1.5" strokeDasharray="4,2" markerEnd="url(#arA)" />
+            <line x1="310" y1="60" x2="340" y2="90" stroke={C.recovery} strokeWidth="1.5" strokeDasharray="4,2" markerEnd="url(#arA)" />
+
+            {/* Recovery equipment */}
+            <MiniBlower x={180} y={110} label="6KA 2140" color={C.purple} />
+            <MiniCompressor x={320} y={110} label="LP Comp" color={C.gas} />
+            <MiniCompressor x={440} y={110} label="HP Comp" color={C.gas} />
+
+            {/* Flow arrows */}
+            <line x1="200" y1="110" x2="296" y2="110" stroke={C.gas} strokeWidth="1.5" markerEnd="url(#arG)" />
+            <line x1="340" y1="110" x2="416" y2="110" stroke={C.gas} strokeWidth="1.5" markerEnd="url(#arG)" />
+            <line x1="460" y1="110" x2="520" y2="110" stroke={C.gas} strokeWidth="1.5" markerEnd="url(#arG)" />
+
+            {/* Export */}
+            <rect x="530" y="96" width="80" height="28" rx="4" fill="none" stroke={C.gas} strokeWidth="1.2" />
+            <text x="570" y="113" textAnchor="middle" fontSize="8" fontWeight="600" fill={C.gas}>Export Gas</text>
+
+            {/* Data labels */}
+            <text x="80" y={20} textAnchor="middle" fontSize="7" fontWeight="600" fill={C.flare}>{fmt(hpFlare)} Sm³/d</text>
+            <text x="180" y={20} textAnchor="middle" fontSize="7" fontWeight="600" fill={C.flare}>{fmt(lpFlare)} Sm³/d</text>
+            <text x="280" y={35} textAnchor="middle" fontSize="7" fontWeight="600" fill={txtS}>{fmt(hullVent)} Sm³/d</text>
+            <text x="570" y={90} textAnchor="middle" fontSize="7" fontWeight="600" fill={C.gas}>{fmt(totalRecovered)} Sm³/d</text>
+
+            {/* Markers */}
+            <defs>
+              <marker id="arA" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="4" orient="auto">
+                <path d="M0,0L8,3L0,6Z" fill={C.recovery} />
+              </marker>
+              <marker id="arG" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="4" orient="auto">
+                <path d="M0,0L8,3L0,6Z" fill={C.gas} />
+              </marker>
+            </defs>
+          </svg>
+        </div>
+      </div>
+
+      {/* KPI Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        {[
+          { label: 'Total Flaring', value: fmt(totalFlaring), unit: 'Sm³/d', color: C.flare, border: '#f44747' },
+          { label: t.totalRecovered || 'Recovered', value: fmt(totalRecovered), unit: 'Sm³/d', color: C.gas, border: '#4ec9b0' },
+          { label: t.recoveryEfficiency || 'Recovery', value: recoveryRate.toFixed(1), unit: '%', color: C.accent, border: '#007acc' },
+          { label: t.emissionReduction || 'CO₂ Reduction', value: fmt(reducaoEmissoes), unit: 'tCO₂eq/yr', color: C.warn, border: '#dcdcaa' },
+          { label: 'Residual', value: fmt(totalResidual), unit: 'Sm³/d', color: C.purple, border: '#c586c0' },
+        ].map((k, i) => (
+          <div key={i} className="card p-3" style={{ borderLeft: `3px solid ${k.border}` }}>
+            <div className="text-[10px] uppercase tracking-wide" style={{ color: txtS }}>{k.label}</div>
+            <div className="text-lg font-bold mt-0.5" style={{ color: k.color }}>{k.value}</div>
+            <div className="text-[10px]" style={{ color: txtS }}>{k.unit}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Mass Balance + Emissions — 2 columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Mass Balance */}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: border }}>
+            <CheckmarkCircle16Regular style={{ color: C.gas }} />
+            <span className="text-xs font-semibold" style={{ color: txt }}>{t.massBalance || 'MASS BALANCE'}</span>
+          </div>
+          <div className="p-4 space-y-2">
+            {/* Recovered */}
+            <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: C.gas }}>
+              {t.gasRecoveredLabel || 'Gas Recovered'}
+            </div>
+            {[
+              { label: 'HP Flare', value: gasHPRec, rate: taxaHP },
+              { label: 'LP Flare', value: gasLPRec, rate: taxaLP },
+              { label: 'Hull Vent', value: gasHullRec, rate: taxaHull },
+            ].map((r, i) => (
+              <div key={i} className="flex items-center justify-between py-1 border-b" style={{ borderColor: border }}>
+                <span className="text-xs" style={{ color: txt }}>{r.label}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono font-semibold" style={{ color: C.gas }}>{fmt(r.value)} Sm³/d</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: isDark ? '#1a3a2a' : '#ecfdf5', color: C.gas }}>-{r.rate}%</span>
                 </div>
               </div>
-              <div className="text-xs text-green-700 mt-2">
-                {t.destination}
+            ))}
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs font-bold" style={{ color: txt }}>TOTAL</span>
+              <span className="text-sm font-bold font-mono" style={{ color: C.gas }}>{fmt(totalRecovered)} Sm³/d</span>
+            </div>
+
+            {/* Separator */}
+            <div className="border-t my-2" style={{ borderColor: border }} />
+
+            {/* Residual */}
+            <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: C.flare }}>
+              {t.residualEmissions || 'Residual (still flared)'}
+            </div>
+            {[
+              { label: 'HP Flare', value: hpFlare - gasHPRec },
+              { label: 'LP Flare', value: lpFlare - gasLPRec },
+              { label: 'Hull Vent', value: hullVent - gasHullRec },
+            ].map((r, i) => (
+              <div key={i} className="flex items-center justify-between py-1 border-b" style={{ borderColor: border }}>
+                <span className="text-xs" style={{ color: txt }}>{r.label}</span>
+                <span className="text-xs font-mono" style={{ color: C.flare }}>{fmt(r.value)} Sm³/d</span>
               </div>
+            ))}
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-xs font-bold" style={{ color: txt }}>TOTAL</span>
+              <span className="text-sm font-bold font-mono" style={{ color: C.flare }}>{fmt(totalResidual)} Sm³/d</span>
             </div>
           </div>
+        </div>
 
-          <div className="bg-white border border-orange-200 rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-orange-900 mb-2 flex items-center gap-1">
-              <TrendingDown size={14} />
-              {t.residualEmissions}
-            </h4>
-            <div className="space-y-1 text-xs text-gray-700">
-              <div className="flex justify-between">
-                <span>{t.lpFlareHullVentReduced}:</span>
-                <span className="font-semibold">{NumberFormatter.format(vazaoHPResidual + vazaoHullResidual, 0)} Sm³/d</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-red-600">(-{taxaReducaoLP}%)</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{t.hpFlareReduced}:</span>
-                <span className="font-semibold">{NumberFormatter.format(vazaoLPResidual, 0)} Sm³/d</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-xs text-red-600">(-{taxaReducaoHP}%)</span>
-              </div>
-              <div className="border-t border-orange-300 pt-1 mt-1">
-                <div className="flex justify-between font-bold text-orange-800">
-                  <span>{t.totalEmitted}:</span>
-                  <span className="text-sm">{NumberFormatter.format(totalEmitido, 0)} Sm³/d</span>
+        {/* Emissions Comparison */}
+        <div className="card p-0 overflow-hidden">
+          <div className="px-4 py-2 border-b flex items-center gap-2" style={{ borderColor: border }}>
+            <ArrowTrendingDown16Regular style={{ color: C.gas }} />
+            <span className="text-xs font-semibold" style={{ color: txt }}>{t.emissionsComparison || 'EMISSIONS COMPARISON'}</span>
+          </div>
+          <div className="p-4">
+            {/* Table */}
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${border}` }}>
+                  <th className="text-left py-1.5 font-semibold" style={{ color: txtS }}>{t.source || 'Source'}</th>
+                  <th className="text-right py-1.5 font-semibold" style={{ color: C.flare }}>{t.before || 'Before'}</th>
+                  <th className="text-right py-1.5 font-semibold" style={{ color: C.gas }}>{t.after || 'After'}</th>
+                  <th className="text-right py-1.5 font-semibold" style={{ color: txtS }}>{t.reduction || 'Reduction'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    label: 'LP Flare + Hull',
+                    before: cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull,
+                    after: cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull,
+                  },
+                  {
+                    label: 'HP Flare',
+                    before: cenarioAtual.emissoes_lp_flare,
+                    after: cenarioProposto.emissoes_lp_flare,
+                  },
+                ].map((row, i) => {
+                  const red = row.before > 0 ? ((row.before - row.after) / row.before * 100) : 0;
+                  return (
+                    <tr key={i} style={{ borderBottom: `1px solid ${border}` }}>
+                      <td className="py-1.5" style={{ color: txt }}>{row.label}</td>
+                      <td className="text-right py-1.5 font-mono" style={{ color: C.flare }}>{NumberFormatter.format(row.before, 0)}</td>
+                      <td className="text-right py-1.5 font-mono" style={{ color: C.gas }}>{NumberFormatter.format(row.after, 0)}</td>
+                      <td className="text-right py-1.5 font-mono font-semibold" style={{ color: C.gas }}>-{red.toFixed(1)}%</td>
+                    </tr>
+                  );
+                })}
+                <tr>
+                  <td className="py-2 font-bold" style={{ color: txt }}>TOTAL</td>
+                  <td className="text-right py-2 font-mono font-bold" style={{ color: C.flare }}>{NumberFormatter.format(cenarioAtual.emissoes_total, 0)}</td>
+                  <td className="text-right py-2 font-mono font-bold" style={{ color: C.gas }}>{NumberFormatter.format(cenarioProposto.emissoes_total, 0)}</td>
+                  <td className="text-right py-2 font-mono font-bold" style={{ color: C.gas }}>-{reducaoPercentual.toFixed(1)}%</td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* Reduction banner */}
+            <div className="mt-4 p-3 rounded" style={{ backgroundColor: isDark ? '#1a2a1a' : '#f0fdf4', border: `1px solid ${isDark ? '#2a4a2a' : '#bbf7d0'}` }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide" style={{ color: txtS }}>{t.reductionLabel || 'Annual Reduction'}</div>
+                  <div className="text-lg font-bold" style={{ color: C.gas }}>{NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/yr</div>
                 </div>
+                <div className="text-2xl font-bold" style={{ color: C.gas }}>-{reducaoPercentual.toFixed(1)}%</div>
               </div>
+            </div>
+
+            {/* Unit: tCO₂eq/yr */}
+            <div className="mt-2 text-right">
+              <span className="text-[10px]" style={{ color: txtS }}>Unit: tCO₂eq/yr</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Emissões Reduzidas */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.reducedGhgEmissions}</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Tabela Comparativa */}
-          <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-gray-800 mb-2">{t.emissionsComparison}</h4>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-2 py-1 text-left font-semibold text-gray-700">{t.source}</th>
-                    <th className="px-2 py-1 text-right font-semibold text-gray-700">{t.before}</th>
-                    <th className="px-2 py-1 text-right font-semibold text-gray-700">{t.after}</th>
-                    <th className="px-2 py-1 text-right font-semibold text-gray-700">{t.reduction}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-2 py-1 text-gray-700">LP Flare + Hull Vent</td>
-                    <td className="px-2 py-1 text-right font-medium">{NumberFormatter.format(cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull, 0)}</td>
-                    <td className="px-2 py-1 text-right font-medium text-green-700">{NumberFormatter.format(cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull, 0)}</td>
-                    <td className="px-2 py-1 text-right font-semibold text-green-700">
-                      {NumberFormatter.format((((cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull) - (cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull)) / (cenarioAtual.emissoes_hp_flare + cenarioAtual.emissoes_hull) * 100), 1)}%
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="px-2 py-1 text-gray-700">HP Flare</td>
-                    <td className="px-2 py-1 text-right font-medium">{NumberFormatter.format(cenarioAtual.emissoes_lp_flare, 0)}</td>
-                    <td className="px-2 py-1 text-right font-medium text-green-700">{NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0)}</td>
-                    <td className="px-2 py-1 text-right font-semibold text-green-700">
-                      {NumberFormatter.format(((cenarioAtual.emissoes_lp_flare - cenarioProposto.emissoes_lp_flare) / cenarioAtual.emissoes_lp_flare * 100), 1)}%
-                    </td>
-                  </tr>
-                  <tr className="bg-gray-50 font-bold">
-                    <td className="px-2 py-1 text-gray-900">TOTAL</td>
-                    <td className="px-2 py-1 text-right">{NumberFormatter.format(cenarioAtual.emissoes_total, 0)}</td>
-                    <td className="px-2 py-1 text-right text-green-700">{NumberFormatter.format(cenarioProposto.emissoes_total, 0)}</td>
-                    <td className="px-2 py-1 text-right text-green-700">{NumberFormatter.format(reducaoPercentual, 1)}%</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Card de Emissões Reduzidas */}
-          <div className="bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-lg p-3 shadow-sm">
-            <h4 className="text-xs font-semibold text-white text-center mb-2">{t.reducedEmissions}</h4>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 mb-2">
-              <div className="space-y-1 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-green-100">{t.lpFlareHullVent}:</span>
-                  <span className="font-semibold">{NumberFormatter.format(cenarioProposto.emissoes_hp_flare + cenarioProposto.emissoes_hull, 0)}</span>
+      {/* Equipment Sizing */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-4 py-2 border-b" style={{ borderColor: border }}>
+          <span className="text-xs font-semibold" style={{ color: txt }}>EQUIPMENT — RECOVERY SYSTEM</span>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {[
+              { tag: '6KB 5230A', name: 'HP Compressor', data: hpComp, color: C.gas },
+              { tag: '6KB 5110', name: 'LP Compressor', data: lpComp, color: C.gas },
+              { tag: '6KA 2140', name: 'Hull Vent Blower', data: blower, color: C.purple },
+            ].map((eq, i) => (
+              <div key={i} className="p-3 rounded" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold" style={{ color: eq.color }}>{eq.tag}</span>
+                  <span className="text-[10px]" style={{ color: txtS }}>{eq.name}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-green-100">{t.hpFlare}:</span>
-                  <span className="font-semibold">{NumberFormatter.format(cenarioProposto.emissoes_lp_flare, 0)}</span>
+                <div className="space-y-1.5">
+                  {[
+                    { label: 'Flow', value: `${fmt(eq.data.vazao)} Sm³/d` },
+                    { label: 'Pressure', value: `${eq.data.pressao} bar` },
+                    { label: 'Temp', value: `${eq.data.temperatura} °C` },
+                  ].map((p, j) => (
+                    <div key={j} className="flex justify-between text-xs">
+                      <span style={{ color: txtS }}>{p.label}</span>
+                      <span className="font-mono font-semibold" style={{ color: txt }}>{p.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-
-            <div className="bg-white rounded-lg p-3 text-center">
-              <p className="text-xs text-green-800 font-semibold mb-1">{t.totalAnnualNew}</p>
-              <h2 className="text-xl font-bold text-green-700 mb-1">
-                {NumberFormatter.format(cenarioProposto.emissoes_total, 0)}
-              </h2>
-              <p className="text-xs text-green-800 font-semibold">{t.tonsCO2eq}</p>
-            </div>
-
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 mt-2 text-center">
-              <p className="text-xs font-semibold mb-1">{t.reductionLabel}: {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano</p>
-              <p className="text-lg font-bold">↓ {NumberFormatter.format(reducaoPercentual, 1)}%</p>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Benefícios e Vantagens */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 mb-2">{t.benefitsAdvantages}</h3>
-
-        <div className="bg-white border border-green-200 rounded-lg p-3 shadow-sm">
-          <div className="flex items-start gap-2 mb-2">
-            <Leaf size={16} className="text-green-600 flex-shrink-0" />
-            <div>
-              <h4 className="text-xs font-semibold text-green-900 mb-2">{t.mainBenefits}</h4>
-              <ul className="space-y-1 text-xs text-gray-700">
-                <li className="flex items-start gap-1">
-                  <span className="text-green-600">•</span>
-                  <div>
-                    <strong>{t.energyUtilization}:</strong> {NumberFormatter.format(cenarioProposto.vazao_anual_recuperada / 1e6, 2)} MSm³/ano {t.gasRecoveredAmount}
-                  </div>
-                </li>
-                <li className="flex items-start gap-1">
-                  <span className="text-green-600">•</span>
-                  <div>
-                    <strong>{t.emissionReduction}:</strong> {NumberFormatter.format(reducaoEmissoes, 0)} tCO₂eq/ano ({NumberFormatter.format(reducaoPercentual, 1)}%)
-                  </div>
-                </li>
-                <li className="flex items-start gap-1">
-                  <span className="text-green-600">•</span>
-                  <div>
-                    <strong>{t.revenueGeneration}:</strong> {t.gasCanBeTraded}
-                  </div>
-                </li>
-                <li className="flex items-start gap-1">
-                  <span className="text-green-600">•</span>
-                  <div>
-                    <strong>{t.environmentalCompliance}:</strong> {t.alignedZeroFlare}
-                  </div>
-                </li>
-                <li className="flex items-start gap-1">
-                  <span className="text-green-600">•</span>
-                  <div>
-                    <strong>{t.sustainability}:</strong> {t.contributesESG}
-                  </div>
-                </li>
-                <li className="flex items-start gap-1">
-                  <span className="text-green-600">•</span>
-                  <div>
-                    <strong>{t.operationalEfficiency}:</strong> {t.resourceOptimization}
-                  </div>
-                </li>
-              </ul>
-            </div>
+      {/* Monte Carlo */}
+      <div className="card p-0 overflow-hidden">
+        <div className="px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: border }}>
+          <div className="flex items-center gap-2">
+            <ChartMultiple16Regular style={{ color: accent }} />
+            <span className="text-xs font-semibold" style={{ color: txt }}>{t.monteCarloAnalysis || 'PROBABILISTIC ANALYSIS'}</span>
           </div>
-        </div>
-      </div>
-
-      {/* Simulação Monte Carlo - Análise Probabilística */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-bold text-gray-900">{t.monteCarloAnalysis}</h3>
           <button
             onClick={() => setShowMonteCarlo(!showMonteCarlo)}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className="px-3 py-1 text-[10px] font-semibold rounded transition-colors"
+            style={{
+              backgroundColor: isDark ? '#264f78' : '#007acc',
+              color: '#ffffff',
+            }}
           >
-            <BarChart3 size={14} />
-            {showMonteCarlo ? t.hideSimulation : t.showSimulation}
+            {showMonteCarlo ? (t.hideSimulation || 'Hide') : (t.showSimulation || 'Show')}
           </button>
         </div>
 
         {showMonteCarlo && (
-          <div className="space-y-3 animate-fade-in">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-xs text-gray-700 mb-2">
-                <strong>{t.probabilisticSimulation}</strong> {t.consideringRecoveryVariations}
-              </p>
-            </div>
-
+          <div className="p-4 space-y-3 animate-fade-in">
+            {/* 3 scenarios */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Cenário Pessimista */}
-              <div className="bg-white border-2 border-orange-300 rounded-lg p-3 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-bold text-orange-800">{cenariosProbabilisticos.pessimista.nome}</h4>
-                  <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded font-semibold">
-                    {cenariosProbabilisticos.pessimista.probabilidade}%
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  <div className="bg-orange-50 p-2 rounded">
-                    <p className="text-gray-600 mb-1">{t.recoveryRates}:</p>
-                    <div className="space-y-0.5 text-gray-700">
-                      <div className="flex justify-between">
-                        <span>{t.hullVent}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.pessimista.taxaHull}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>{t.lpFlare}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.pessimista.taxaLP}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>{t.hpFlare}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.pessimista.taxaHP}%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-orange-200 pt-2">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">{t.gasRecoveredLabel}:</span>
-                      <span className="font-bold text-orange-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.pessimista.gasTotal / 1000, 1)} KSm³/d
+              {[
+                { key: 'pessimista', label: t.pessimistic || 'Conservative', color: '#e88a3a', bg: isDark ? '#2a2210' : '#fff7ed' },
+                { key: 'realista', label: t.realistic || 'Expected', color: '#007acc', bg: isDark ? '#102030' : '#eff6ff' },
+                { key: 'otimista', label: t.optimistic || 'Optimistic', color: '#4ec9b0', bg: isDark ? '#102a20' : '#ecfdf5' },
+              ].map((s) => {
+                const d = mc[s.key];
+                return (
+                  <div key={s.key} className="p-3 rounded" style={{ backgroundColor: s.bg, border: `1px solid ${border}` }}>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-xs font-bold" style={{ color: s.color }}>{s.label}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ backgroundColor: isDark ? '#333' : '#f3f4f6', color: txtS }}>
+                        P{d.prob}%
                       </span>
                     </div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">{t.globalRateLabel}:</span>
-                      <span className="font-bold text-orange-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.pessimista.taxaRecuperacao, 1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">{t.emissionReductionShort}:</span>
-                      <span className="font-bold text-green-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.pessimista.reducaoEmissoes, 0)} t/ano
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Cenário Realista */}
-              <div className="bg-white border-2 border-blue-400 rounded-lg p-3 shadow-md">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-bold text-blue-800">{cenariosProbabilisticos.realista.nome}</h4>
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">
-                    {cenariosProbabilisticos.realista.probabilidade}%
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  <div className="bg-blue-50 p-2 rounded">
-                    <p className="text-gray-600 mb-1">{t.recoveryRates}:</p>
-                    <div className="space-y-0.5 text-gray-700">
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between" style={{ color: txtS }}>
+                        <span>Hull / LP / HP</span>
+                        <span className="font-mono font-semibold" style={{ color: s.color }}>{d.tH}% / {d.tL}% / {d.tHP}%</span>
+                      </div>
+                      <div className="border-t my-1" style={{ borderColor: border }} />
                       <div className="flex justify-between">
-                        <span>{t.hullVent}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.realista.taxaHull}%</span>
+                        <span style={{ color: txtS }}>Recovered</span>
+                        <span className="font-mono font-semibold" style={{ color: s.color }}>{(d.total / 1000).toFixed(1)} kSm³/d</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>{t.lpFlare}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.realista.taxaLP}%</span>
+                        <span style={{ color: txtS }}>Rate</span>
+                        <span className="font-mono font-semibold" style={{ color: s.color }}>{d.rate.toFixed(1)}%</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>{t.hpFlare}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.realista.taxaHP}%</span>
+                        <span style={{ color: txtS }}>CO₂ Reduction</span>
+                        <span className="font-mono font-semibold" style={{ color: C.gas }}>{fmt(d.reducao)} t/yr</span>
                       </div>
                     </div>
                   </div>
-
-                  <div className="border-t border-blue-200 pt-2">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">{t.gasRecoveredLabel}:</span>
-                      <span className="font-bold text-blue-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.realista.gasTotal / 1000, 1)} KSm³/d
-                      </span>
-                    </div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">{t.globalRateLabel}:</span>
-                      <span className="font-bold text-blue-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.realista.taxaRecuperacao, 1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">{t.emissionReductionShort}:</span>
-                      <span className="font-bold text-green-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.realista.reducaoEmissoes, 0)} t/ano
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Cenário Otimista */}
-              <div className="bg-white border-2 border-green-400 rounded-lg p-3 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-bold text-green-800">{cenariosProbabilisticos.otimista.nome}</h4>
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded font-semibold">
-                    {cenariosProbabilisticos.otimista.probabilidade}%
-                  </span>
-                </div>
-
-                <div className="space-y-2 text-xs">
-                  <div className="bg-green-50 p-2 rounded">
-                    <p className="text-gray-600 mb-1">{t.recoveryRates}:</p>
-                    <div className="space-y-0.5 text-gray-700">
-                      <div className="flex justify-between">
-                        <span>{t.hullVent}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.otimista.taxaHull}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>{t.lpFlare}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.otimista.taxaLP}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>{t.hpFlare}:</span>
-                        <span className="font-semibold">{cenariosProbabilisticos.otimista.taxaHP}%</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-green-200 pt-2">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">{t.gasRecoveredLabel}:</span>
-                      <span className="font-bold text-green-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.otimista.gasTotal / 1000, 1)} KSm³/d
-                      </span>
-                    </div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-gray-600">{t.globalRateLabel}:</span>
-                      <span className="font-bold text-green-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.otimista.taxaRecuperacao, 1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">{t.emissionReductionShort}:</span>
-                      <span className="font-bold text-green-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.otimista.reducaoEmissoes, 0)} t/ano
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
 
-            {/* Resumo Estatístico */}
-            <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
-              <h4 className="text-xs font-semibold text-gray-800 mb-2">{t.statisticalSummary}</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div className="bg-gray-50 p-2 rounded">
-                  <p className="text-gray-600 mb-1">{t.gasRecoveredKSm3d}:</p>
-                  <div className="space-y-0.5">
-                    <div className="flex justify-between">
-                      <span>{t.minimum}:</span>
-                      <span className="font-bold text-orange-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.pessimista.gasTotal / 1000, 1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t.expected}:</span>
-                      <span className="font-bold text-blue-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.realista.gasTotal / 1000, 1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t.maximum}:</span>
-                      <span className="font-bold text-green-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.otimista.gasTotal / 1000, 1)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-2 rounded">
-                  <p className="text-gray-600 mb-1">{t.recoveryRatePercent}:</p>
-                  <div className="space-y-0.5">
-                    <div className="flex justify-between">
-                      <span>{t.minimum}:</span>
-                      <span className="font-bold text-orange-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.pessimista.taxaRecuperacao, 1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t.expected}:</span>
-                      <span className="font-bold text-blue-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.realista.taxaRecuperacao, 1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t.maximum}:</span>
-                      <span className="font-bold text-green-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.otimista.taxaRecuperacao, 1)}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-2 rounded">
-                  <p className="text-gray-600 mb-1">{t.emissionReductionTYear}:</p>
-                  <div className="space-y-0.5">
-                    <div className="flex justify-between">
-                      <span>{t.minimum}:</span>
-                      <span className="font-bold text-orange-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.pessimista.reducaoEmissoes, 0)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t.expected}:</span>
-                      <span className="font-bold text-blue-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.realista.reducaoEmissoes, 0)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t.maximum}:</span>
-                      <span className="font-bold text-green-700">
-                        {NumberFormatter.format(cenariosProbabilisticos.otimista.reducaoEmissoes, 0)}
-                      </span>
-                    </div>
-                  </div>
+            {/* Range summary bar */}
+            <div className="p-3 rounded" style={{ backgroundColor: bgCard, border: `1px solid ${border}` }}>
+              <div className="text-[10px] uppercase tracking-wide mb-2" style={{ color: txtS }}>RECOVERY RANGE</div>
+              <div className="relative h-6 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? '#333' : '#e5e7eb' }}>
+                <div
+                  className="absolute h-full rounded-full"
+                  style={{
+                    left: `${mc.pessimista.rate * 0.9}%`,
+                    width: `${(mc.otimista.rate - mc.pessimista.rate) * 0.9 + 5}%`,
+                    background: `linear-gradient(90deg, #e88a3a, #007acc, #4ec9b0)`,
+                    opacity: 0.8,
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold" style={{ color: isDark ? '#fff' : '#1f2937' }}>
+                    {mc.pessimista.rate.toFixed(1)}% — {mc.realista.rate.toFixed(1)}% — {mc.otimista.rate.toFixed(1)}%
+                  </span>
                 </div>
               </div>
             </div>
