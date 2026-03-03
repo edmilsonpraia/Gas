@@ -135,7 +135,7 @@
   }
 
   .sidebar {
-    @apply w-64 h-screen overflow-y-auto transition-colors duration-200;
+    @apply h-screen overflow-y-auto transition-colors duration-200;
     background-color: #f3f3f3;
     border-right: 1px solid #e5e5e5;
   }

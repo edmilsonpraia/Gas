@@ -1,44 +1,115 @@
-import React, { useState } from 'react';
-import { ChevronLeft20Regular, ChevronRight20Regular, Navigation24Regular } from '@fluentui/react-icons';
+import React, { useState, useEffect } from 'react';
+import {
+  PulseSquare24Regular,
+  Settings24Regular,
+  Database24Regular,
+  Wrench24Regular,
+  ChevronLeft16Regular,
+  ChevronRight16Regular,
+} from '@fluentui/react-icons';
 import Sidebar from './Sidebar';
 import { useLanguage } from '../contexts/LanguageContext';
 
 /**
- * Wrapper para tornar a sidebar expansível/colapsável
+ * VS Code-style layout: Activity Bar + Collapsible Side Panel
  */
 export default function CollapsibleSidebar({ onDataChange }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeView, setActiveView] = useState('monitoring');
+  const [isDark, setIsDark] = useState(false);
   const { t } = useLanguage();
 
+  useEffect(() => {
+    const check = () => setIsDark(document.body.classList.contains('dark'));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+
+  const activityItems = [
+    { id: 'monitoring', icon: PulseSquare24Regular, tooltip: t.monitoringSystem || 'Monitoramento' },
+    { id: 'equipment', icon: Wrench24Regular, tooltip: t.operationalData || 'Equipamentos' },
+    { id: 'parameters', icon: Database24Regular, tooltip: t.parameters || 'Parâmetros' },
+    { id: 'settings', icon: Settings24Regular, tooltip: t.settings || 'Configurações' },
+  ];
+
+  const handleActivityClick = (id) => {
+    if (activeView === id && !isCollapsed) {
+      setIsCollapsed(true);
+    } else {
+      setActiveView(id);
+      setIsCollapsed(false);
+    }
+  };
+
   return (
-    <>
-      {/* Sidebar */}
+    <div className="flex h-screen" style={{ flexShrink: 0 }}>
+      {/* Activity Bar — always visible */}
       <div
-        className={`transition-all duration-300 ease-in-out ${
-          isCollapsed ? 'w-0' : 'w-64'
-        } overflow-hidden`}
+        className="flex flex-col items-center h-full"
+        style={{
+          width: 48,
+          minWidth: 48,
+          backgroundColor: isDark ? '#333333' : '#2c2c2c',
+          borderRight: `1px solid ${isDark ? '#252526' : '#1e1e1e'}`,
+        }}
       >
-        <Sidebar onDataChange={onDataChange} />
+        {/* Activity Icons */}
+        <div className="flex flex-col items-center w-full mt-0 flex-1">
+          {activityItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeView === item.id && !isCollapsed;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleActivityClick(item.id)}
+                title={item.tooltip}
+                className="relative w-full flex items-center justify-center transition-colors"
+                style={{
+                  height: 48,
+                  color: isActive ? '#ffffff' : '#858585',
+                  backgroundColor: 'transparent',
+                  borderLeft: isActive ? '2px solid #007acc' : '2px solid transparent',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) e.currentTarget.style.color = '#d4d4d4';
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) e.currentTarget.style.color = '#858585';
+                }}
+              >
+                <Icon className="w-6 h-6" />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Bottom: Collapse toggle */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          title={isCollapsed ? (t.expandSidebar || 'Expandir') : (t.collapseSidebar || 'Colapsar')}
+          className="w-full flex items-center justify-center mb-2 transition-colors"
+          style={{ height: 36, color: '#858585' }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = '#d4d4d4'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = '#858585'; }}
+        >
+          {isCollapsed ? <ChevronRight16Regular /> : <ChevronLeft16Regular />}
+        </button>
       </div>
 
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`fixed top-20 ${
-          isCollapsed ? 'left-0' : 'left-64'
-        } z-50 bg-vs-accent text-white p-2 rounded-r-lg shadow-lg hover:bg-primary-600 transition-all duration-300`}
-        title={isCollapsed ? t.expandSidebar : t.collapseSidebar}
+      {/* Side Panel — collapsible */}
+      <div
+        className="h-full overflow-hidden transition-all duration-200 ease-in-out"
+        style={{
+          width: isCollapsed ? 0 : 256,
+          minWidth: isCollapsed ? 0 : 256,
+          backgroundColor: isDark ? '#252526' : '#f3f3f3',
+          borderRight: isCollapsed ? 'none' : `1px solid ${isDark ? '#3c3c3c' : '#e5e5e5'}`,
+        }}
       >
-        {isCollapsed ? <ChevronRight20Regular /> : <ChevronLeft20Regular />}
-      </button>
-
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 bg-vs-accent text-white p-4 rounded-full shadow-medium hover:bg-primary-600"
-      >
-        <Navigation24Regular />
-      </button>
-    </>
+        <Sidebar onDataChange={onDataChange} activeView={activeView} />
+      </div>
+    </div>
   );
 }
